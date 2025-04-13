@@ -1,22 +1,22 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "soap/laravel-shopping-cart",
+    "description": "Laravel shopping cart with conditions and coupons support",
     "keywords": [
-        ":vendor_name",
+        "Prasit Gebsaap",
         "laravel",
-        ":package_slug"
+        "laravel-shopping-cart"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/soap/laravel-shopping-cart",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Prasit Gebsaap",
+            "email": "prasit.gebsaap@gmail.com",
             "role": "Developer"
         }
     ],
     "require": {
-        "php": "^8.4",
+        "php": "^8.3|^8.4",
         "spatie/laravel-package-tools": "^1.16",
         "illuminate/contracts": "^10.0||^11.0||^12.0"
     },
@@ -35,13 +35,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Soap\\LaravelShoppingCart\\": "src/",
+            "Soap\\LaravelShoppingCart\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "Soap\\LaravelShoppingCart\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -63,10 +63,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Soap\\LaravelShoppingCart\\ShoppingCartServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "ShoppingCart": "Soap\\LaravelShoppingCart\\Facades\\ShoppingCart"
             }
         }
     },

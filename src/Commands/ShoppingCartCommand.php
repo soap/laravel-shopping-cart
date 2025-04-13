@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Soap\LaravelShoppingCart\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class ShoppingCartCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'laravel-shopping-cart';
 
     public $description = 'My command';
 
