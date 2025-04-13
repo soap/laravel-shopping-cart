@@ -1,6 +1,6 @@
 <?php
 
-namespace Soap\LaravelShoppingCart\Commands;
+namespace Soap\ShoppingCart\Commands;
 
 use Illuminate\Console\Command;
 

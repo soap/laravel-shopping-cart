@@ -1,6 +1,6 @@
 <?php
 
-namespace Soap\LaravelShoppingCart\Facades;
+namespace Soap\ShoppingCart\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
@@ -11,6 +11,6 @@ class ShoppingCart extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \Soap\LaravelShoppingCart\ShoppingCart::class;
+        return \Soap\ShoppingCart\ShoppingCart::class;
     }
 }

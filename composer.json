@@ -35,13 +35,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Soap\\LaravelShoppingCart\\": "src/",
-            "Soap\\LaravelShoppingCart\\Database\\Factories\\": "database/factories/"
+            "Soap\\ShoppingCart\\": "src/",
+            "Soap\\ShoppingCart\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Soap\\LaravelShoppingCart\\Tests\\": "tests/",
+            "Soap\\ShoppingCart\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -63,10 +63,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Soap\\LaravelShoppingCart\\ShoppingCartServiceProvider"
+                "Soap\\ShoppingCart\\ShoppingCartServiceProvider"
             ],
             "aliases": {
-                "ShoppingCart": "Soap\\LaravelShoppingCart\\Facades\\ShoppingCart"
+                "ShoppingCart": "Soap\\ShoppingCart\\Facades\\ShoppingCart"
             }
         }
     },

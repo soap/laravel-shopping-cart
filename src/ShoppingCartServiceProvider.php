@@ -1,8 +1,8 @@
 <?php
 
-namespace Soap\LaravelShoppingCart;
+namespace Soap\ShoppingCart;
 
-use Soap\LaravelShoppingCart\Commands\ShoppingCartCommand;
+use Soap\ShoppingCart\Commands\ShoppingCartCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
