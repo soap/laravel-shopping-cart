@@ -11,6 +11,6 @@ class ShoppingCart extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \Soap\ShoppingCart\ShoppingCart::class;
+        return 'shopping-cart';
     }
 }

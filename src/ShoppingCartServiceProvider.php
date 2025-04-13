@@ -22,4 +22,15 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
             ->hasMigration('create_laravel_shopping_carts_table')
             ->hasCommand(ShoppingCartCommand::class);
     }
+
+    public function packagesRegistered(): void
+    {
+        $this->app->bind('shopping-cart', ShoppingCart::class);
+        $this->app['events']->listen(Logout::class, function () {
+
+            if ($this->app['config']->get('shopping-cart.destroy_on_logout')) {
+                $this->app->make(SessionManager::class)->forget('cart');
+            }
+        });
+    }
 }
