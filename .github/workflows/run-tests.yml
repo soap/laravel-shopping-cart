@@ -40,6 +40,11 @@ jobs:
             
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
