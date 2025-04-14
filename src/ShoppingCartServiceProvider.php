@@ -2,6 +2,8 @@
 
 namespace Soap\ShoppingCart;
 
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Session\SessionManager;
 use Soap\ShoppingCart\Commands\ShoppingCartCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -23,11 +25,14 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
             ->hasCommand(ShoppingCartCommand::class);
     }
 
-    public function packagesRegistered(): void
+    public function packageRegistered(): void
     {
-        $this->app->bind('shopping-cart', ShoppingCart::class);
-        $this->app['events']->listen(Logout::class, function () {
+        $this->app->singleton('shopping-cart', ShoppingCart::class);
+    }
 
+    public function PackageBooted(): void
+    {
+        $this->app['events']->listen(Logout::class, function () {
             if ($this->app['config']->get('shopping-cart.destroy_on_logout')) {
                 $this->app->make(SessionManager::class)->forget('cart');
             }

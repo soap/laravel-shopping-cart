@@ -6,20 +6,16 @@ trait CanBeBought
 {
     /**
      * Get the identifier of the Buyable item.
-     *
-     * @return int|string
      */
-    public function getBuyableIdentifier($options = null)
+    public function getBuyableIdentifier($options = null): int|string
     {
         return method_exists($this, 'getKey') ? $this->getKey() : $this->id;
     }
 
     /**
      * Get the name, title or description of the Buyable item.
-     *
-     * @return string
      */
-    public function getBuyableDescription($options = null)
+    public function getBuyableDescription($options = null): string
     {
         if (($name = $this->getAttribute('name'))) {
             return $name;
@@ -36,10 +32,8 @@ trait CanBeBought
 
     /**
      * Get the price of the Buyable item.
-     *
-     * @return float
      */
-    public function getBuyablePrice($options = null)
+    public function getBuyablePrice($options = null): float
     {
         if (($price = $this->getAttribute('price'))) {
             return $price;
@@ -48,10 +42,8 @@ trait CanBeBought
 
     /**
      * Get the weight of the Buyable item.
-     *
-     * @return float
      */
-    public function getBuyableWeight($options = null)
+    public function getBuyableWeight($options = null): float
     {
         if (($weight = $this->getAttribute('weight'))) {
             return $weight;

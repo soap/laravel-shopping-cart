@@ -6,9 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up()
     {
-        Schema::create(config('shopping-cart.database.table), function (Blueprint $table) {
+        Schema::create(config('shopping-cart.database.table'), function (Blueprint $table) {
             $table->string('identifier');
             $table->string('instance');
             $table->longText('content');
@@ -18,8 +21,11 @@ return new class extends Migration
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down()
     {
-        Schema::drop(config('shopping-cart.database.table'));
+        Schema::drop(config('cart.database.table'));
     }
 };

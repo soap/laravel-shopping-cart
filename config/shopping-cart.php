@@ -40,7 +40,7 @@ return [
 
         'connection' => null,
 
-        'table' => 'shopping-carts',
+        'table' => 'shopping_carts',
 
     ],
 

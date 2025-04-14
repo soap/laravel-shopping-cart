@@ -4,8 +4,6 @@ namespace Soap\ShoppingCart;
 
 use Carbon\Carbon;
 use Closure;
-use Gloudemans\ShoppingCart\Exceptions\InvalidRowIDException;
-use Gloudemans\ShoppingCart\Exceptions\UnknownModelException;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Session\SessionManager;
@@ -14,6 +12,8 @@ use Illuminate\Support\Traits\Macroable;
 use Soap\ShoppingCart\Contracts\BuyableInterface;
 use Soap\ShoppingCart\Contracts\InstanceIdentifierInterface;
 use Soap\ShoppingCart\Exceptions\CartAlreadyStoredException;
+use Soap\ShoppingCart\Exceptions\InvalidRowIDException;
+use Soap\ShoppingCart\Exceptions\UnknownModelException;
 
 class ShoppingCart
 {
@@ -853,7 +853,7 @@ class ShoppingCart
      */
     private function getConnectionName()
     {
-        $connection = config('cart.database.connection');
+        $connection = config('shopping-cart.database.connection');
 
         return is_null($connection) ? config('database.default') : $connection;
     }
@@ -867,15 +867,15 @@ class ShoppingCart
     private function numberFormat($value, $decimals, $decimalPoint, $thousandSeperator)
     {
         if (is_null($decimals)) {
-            $decimals = config('cart.format.decimals', 2);
+            $decimals = config('shopping-cart.format.decimals', 2);
         }
 
         if (is_null($decimalPoint)) {
-            $decimalPoint = config('cart.format.decimal_point', '.');
+            $decimalPoint = config('shopping-cart.format.decimal_point', '.');
         }
 
         if (is_null($thousandSeperator)) {
-            $thousandSeperator = config('cart.format.thousand_separator', ',');
+            $thousandSeperator = config('shopping-cart.format.thousand_separator', ',');
         }
 
         return number_format($value, $decimals, $decimalPoint, $thousandSeperator);

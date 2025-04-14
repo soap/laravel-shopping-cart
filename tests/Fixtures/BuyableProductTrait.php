@@ -4,10 +4,11 @@ namespace Soap\ShoppingCart\Tests\Fixtures;
 
 use Illuminate\Database\Eloquent\Model;
 use Soap\ShoppingCart\Contracts\BuyableInterface;
+use Soap\ShoppingCart\Traits\CanBeBought;
 
 class BuyableProductTrait extends Model implements BuyableInterface
 {
-    use \Soap\Shoppingcart\CanBeBought;
+    use CanBeBought;
 
     /**
      * The attributes that are mass assignable.

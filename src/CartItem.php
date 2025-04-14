@@ -385,7 +385,7 @@ class CartItem implements Arrayable, Jsonable
         if (property_exists($this, $attribute)) {
             return $this->{$attribute};
         }
-        $decimals = config('cart.format.decimals', 2);
+        $decimals = config('shopping-cart.format.decimals', 2);
 
         switch ($attribute) {
             case 'model':
@@ -402,7 +402,7 @@ class CartItem implements Arrayable, Jsonable
                 return round($this->weight * $this->qty, $decimals);
         }
 
-        $class = new ReflectionClass(config('cart.calculator', DefaultCalculator::class));
+        $class = new ReflectionClass(config('shopping-cart.calculator', DefaultCalculator::class));
         if (! $class->implementsInterface(CalculatorInterface::class)) {
             throw new InvalidCalculatorException('The configured Calculator seems to be invalid. Calculators have to implement the Calculator Contract.');
         }
@@ -505,15 +505,15 @@ class CartItem implements Arrayable, Jsonable
     private function numberFormat($value, $decimals, $decimalPoint, $thousandSeperator)
     {
         if (is_null($decimals)) {
-            $decimals = config('cart.format.decimals', 2);
+            $decimals = config('shopping-cart.format.decimals', 2);
         }
 
         if (is_null($decimalPoint)) {
-            $decimalPoint = config('cart.format.decimal_point', '.');
+            $decimalPoint = config('shopping-cart.format.decimal_point', '.');
         }
 
         if (is_null($thousandSeperator)) {
-            $thousandSeperator = config('cart.format.thousand_separator', ',');
+            $thousandSeperator = config('shopping-cart.format.thousand_separator', ',');
         }
 
         return number_format($value, $decimals, $decimalPoint, $thousandSeperator);

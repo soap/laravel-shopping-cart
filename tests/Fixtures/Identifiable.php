@@ -31,10 +31,8 @@ class Identifiable implements InstanceIdentifierInterface
 
     /**
      * Get the unique identifier to load the Cart from.
-     *
-     * @return int|string
      */
-    public function getInstanceIdentifier($options = null)
+    public function getInstanceIdentifier($options = null): int|string
     {
         return $this->identifier;
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Soap\Shoppingcart\Tests\Fixtures;
+namespace Soap\ShoppingCart\Tests\Fixtures;
 
 class ProductModel
 {
