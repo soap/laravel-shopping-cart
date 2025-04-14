@@ -22,7 +22,7 @@ composer require soap/laravel-shopping-cart
 You can publish and run the migrations with:
 
 ```bash
-php artisan vendor:publish --tag="laravel-shopping-cart-migrations"
+php artisan vendor:publish --tag="shopping-cart-migrations"
 php artisan migrate
 ```
 
@@ -113,7 +113,7 @@ return [
 ];
 ```
 
-This is a fork of [bumbummen99's LaravelShoppingcart](https://github.com/bumbummen99/LaravelShoppingcart) extended with minor features compatible with Laravel 10+. An example integration can be [found here](https://github.com/bumbummen99/LaravelShoppingcartDemo).
+This package is based on [anayarojo/shoppingcart 's Laravel Shoppingcart](https://github.com/anayarojo/laravel-shopping-cart) extended with support for Cart Conditions and Coupons. Laravel versions below 8.0 were removed. The package was test against PHP8.3, PHP8.4 and Laravel 10 to Laravel 12. Current only prefer-stable matrix was tested. Any pull request for prefer-lowest matrix are welcome.
 
 ## Updates
 - Version 1.0.x is a fork of [bumbummen99's LaravelShoppingcart](https://github.com/bumbummen99/LaravelShoppingcart) extended with minor features compatible with Laravel 10+. An example integration can be [found here](https://github.com/bumbummen99/LaravelShoppingcartDemo).
