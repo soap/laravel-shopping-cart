@@ -70,6 +70,10 @@ class ShoppingCart
      */
     private $taxRate = 0;
 
+    protected $hooks = [];
+
+    protected $discountManager;
+
     /**
      * ShoppingCart constructor.
      */
@@ -78,6 +82,12 @@ class ShoppingCart
         $this->session = $session;
         $this->events = $events;
         $this->taxRate = config('shopping-cart.tax');
+
+        $this->discountManager = new DiscountManager(
+            $this,
+            new CouponManager,
+            new ConditionManager
+        );
 
         $this->instance(self::DEFAULT_INSTANCE);
     }
@@ -364,7 +374,7 @@ class ShoppingCart
     }
 
     /**
-     * Get the subtotal (total - tax) of the items in the cart.
+     * Get the subtotal (sum of price * qty - discount) of the items in the cart.
      *
      * @return float
      */
@@ -528,6 +538,8 @@ class ShoppingCart
      * @param  string  $rowId
      * @param  int|float  $taxRate
      * @return void
+     *
+     * @deprecated  Use setTaxRate instead.
      */
     public function setTax($rowId, $taxRate)
     {
@@ -542,11 +554,20 @@ class ShoppingCart
         $this->session->put($this->instance, $content);
     }
 
+    public function setTaxRate($rowId, $taxRate)
+    {
+        $this->setTax($rowId, $taxRate);
+    }
+
     /**
      * Set the global tax rate for the cart.
      * This will set the tax rate for all items.
      *
      * @param  float  $taxRate
+     *
+     * @deprecated  Use setGlobalTaxRate instead.
+     *
+     * @return void
      */
     public function setGlobalTax($taxRate)
     {
@@ -558,6 +579,11 @@ class ShoppingCart
                 $item->setTaxRate($this->taxRate);
             });
         }
+    }
+
+    public function setGlobalTaxRate($taxRate)
+    {
+        $this->setGlobalTax($taxRate);
     }
 
     /**
@@ -758,6 +784,18 @@ class ShoppingCart
             default:
                 return null;
         }
+    }
+
+    public function verifyCoupon(string $couponCode, int|string|null $userId = null): bool
+    {
+        return $this->discountManager->verifyCoupon($couponCode, $userId);
+    }
+
+    public function applyCoupon(string $couponCode, int|string|null $userId = null): self
+    {
+        $this->discountManager->applyCoupon($couponCode, $userId);
+
+        return $this;
     }
 
     /**

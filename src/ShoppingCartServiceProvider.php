@@ -20,8 +20,7 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-shopping-cart')
             ->hasConfigFile()
-            ->hasViews()
-            ->hasMigration('create_laravel_shopping_carts_table')
+            ->hasMigration('create_shopping_carts_table')
             ->hasCommand(ShoppingCartCommand::class);
     }
 
