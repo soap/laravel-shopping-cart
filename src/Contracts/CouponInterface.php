@@ -2,6 +2,8 @@
 
 namespace Soap\ShoppingCart\Contracts;
 
+use Carbon\Carbon;
+
 interface CouponInterface
 {
     /**
@@ -33,7 +35,7 @@ interface CouponInterface
      * Get the type of items the coupon applies to.
      * This could be 'subtotal', 'total', 'shipping'
      */
-    public function getAppliesTo(): string;
+    public function getAppliesTarget(): ?string;
 
     /**
      * Get the expiration date of the coupon.
@@ -45,7 +47,7 @@ interface CouponInterface
      * Check if the coupon is expired.
      * Returns true if the coupon is expired, false otherwise.
      */
-    public function isExpires(): bool;
+    public function isExpired(): bool;
 
     /**
      * Get minumum order value for the coupon to be valid.

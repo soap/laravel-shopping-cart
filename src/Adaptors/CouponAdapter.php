@@ -2,32 +2,47 @@
 
 namespace Soap\ShoppingCart\Adaptors;
 
+use Carbon\Carbon;
+use MichaelRubel\Couponables\Models\Coupon;
 use Soap\ShoppingCart\Contracts\CouponInterface as ExternalCoupon;
 
-class CouponAdapter implements CouponInterface
+class CouponAdapter implements ExternalCoupon
 {
     protected $coupon;
 
-    public function __construct(ExternalCoupon $coupon)
+    public function __construct(Coupon $coupon)
     {
         $this->coupon = $coupon;
     }
 
     public function getCode(): string
     {
-        return $this->coupon->getCode();
+        // MichaelRubel\Couponables\Models\Coupon has a code property
+        return $this->coupon->code;
     }
 
     public function getDiscountType(): string
     {
-        return $this->coupon->data->get('discount_type');
+        return $this->coupon->type; // 'percentage', 'subtraction', or 'fixed'
     }
 
     public function getDiscountValue($total): float
     {
-        // will be implemented in the future
-        // this is a placeholder for the discount value calculation
-        return 0;
+        return $this->coupon->value; // This is the discount value
+    }
+
+    public function getAppliesTarget(): ?string
+    {
+        if ($this->coupon->data->has('applies_to')) {
+            return $this->coupon->data->get('applies_to');
+        }
+
+        return null;
+    }
+
+    public function getExpiresAt(): ?Carbon
+    {
+        return $this->coupon->expires_at;
     }
 
     public function isExpired(): bool
@@ -39,7 +54,7 @@ class CouponAdapter implements CouponInterface
      * Get minimum order value for the coupon to be valid.
      * This is custom data for Couponables package's coupon model
      */
-    public function getMinOrderTotal(): ?float
+    public function getMinOrderValue(): ?float
     {
         if ($this->coupon->data->has('min_order_total')) {
             return $this->coupon->data->get('min_order_total');

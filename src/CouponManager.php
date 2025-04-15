@@ -10,7 +10,7 @@ class CouponManager
      * Array that will hold each coupon data
      * indexed by coupon code.
      */
-    protected array $coupons;
+    protected array $coupons = [];
 
     /**
      * The service that retrieves coupon data.
@@ -71,17 +71,26 @@ class CouponManager
         return $this->coupons;
     }
 
-    public function apply(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null): self {}
-
-    public function verify(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null): bool
+    public function apply(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null): self
     {
         $coupon = $this->get($couponCode);
 
         if (! $coupon) {
-            return false;
+            throw new \Exception("Coupon not found: {$couponCode}");
         }
 
-        return $this->couponService->verifyCoupon($coupon);
+        // Apply the coupon to the cart.
+        $this->couponService->applyCoupon($couponCode, $cart->subtotalFloat(), $userId);
+
+        // Mark the coupon as applied.
+        $this->coupons[$couponCode]['applied'] = true;
+
+        return $this;
+    }
+
+    public function verify(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null): bool
+    {
+        return $this->couponService->verifyCoupon($couponCode, $cart->subtotalFloat(), $userId);
     }
 
     /**

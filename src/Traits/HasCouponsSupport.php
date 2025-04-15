@@ -4,6 +4,11 @@ namespace Soap\ShoppingCart\Traits;
 
 trait HasCouponsSupport
 {
+    public function getCoupons(): array
+    {
+        return $this->coupons()->all();
+    }
+
     /**
      * Add a coupon to the manager.
      *
@@ -28,6 +33,11 @@ trait HasCouponsSupport
         $this->coupons()->remove($code);
 
         return $this;
+    }
+
+    public function verifyCoupon(string $code, int|string|null $userId = null): bool
+    {
+        return $this->coupons()->verify($code, $userId);
     }
 
     /**

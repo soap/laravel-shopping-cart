@@ -4,6 +4,8 @@ namespace Soap\ShoppingCart\Contracts;
 
 interface CouponServiceInterface
 {
+    public function getCoupons(): array;
+
     /**
      * Retrieve a coupon by its code.
      */
@@ -12,10 +14,10 @@ interface CouponServiceInterface
     /**
      * Verify if the coupon is valid.
      */
-    public function verifyCoupon(CouponInterface $coupon): bool;
+    public function verifyCoupon(string $couponCode, $orderAmount = 0, int|string|null $userId = null): bool;
 
     /**
      * Apply the coupon to the cart.
      */
-    public function applyCoupon(CouponInterface $coupon): void;
+    public function applyCoupon(string $couponCode, $orderAmount = 0, int|string|null $userId = null): void;
 }

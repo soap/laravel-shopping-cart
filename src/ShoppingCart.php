@@ -85,8 +85,8 @@ class ShoppingCart
 
         $this->discountManager = new DiscountManager(
             $this,
-            new CouponManager,
-            new ConditionManager
+            app(CouponManager::class),
+            app(ConditionManager::class)
         );
 
         $this->instance(self::DEFAULT_INSTANCE);
@@ -538,8 +538,6 @@ class ShoppingCart
      * @param  string  $rowId
      * @param  int|float  $taxRate
      * @return void
-     *
-     * @deprecated  Use setTaxRate instead.
      */
     public function setTax($rowId, $taxRate)
     {
@@ -564,9 +562,6 @@ class ShoppingCart
      * This will set the tax rate for all items.
      *
      * @param  float  $taxRate
-     *
-     * @deprecated  Use setGlobalTaxRate instead.
-     *
      * @return void
      */
     public function setGlobalTax($taxRate)
@@ -784,6 +779,11 @@ class ShoppingCart
             default:
                 return null;
         }
+    }
+
+    public function getCoupons(): array
+    {
+        return $this->discountManager->getCoupons();
     }
 
     public function verifyCoupon(string $couponCode, int|string|null $userId = null): bool
