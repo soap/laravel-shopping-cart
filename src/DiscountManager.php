@@ -2,6 +2,8 @@
 
 namespace Soap\ShoppingCart;
 
+use Illuminate\Pipeline\Pipeline;
+use Soap\ShoppingCart\Pipelines;
 use Soap\ShoppingCart\Traits\HasCouponsSupport;
 
 class DiscountManager
@@ -29,5 +31,31 @@ class DiscountManager
     public function conditions()
     {
         return $this->conditionManager;
+    }
+
+    public function finalCalculation(): Pipelines\CalculationContext
+    {
+        $context = new Pipelines\CalculationContext($this->cart->subtotalFloat());
+
+        // Discount on subtotal amount, order of execution
+        $subtotalPipes = [
+            Pipelines\ApplyPercentageSubtotalDiscount::class,
+            Pipelines\ApplySubtractionSubtotalDiscount::class,
+        ];
+
+        $finalPipes = array_merge(
+            $subtotalPipes,
+            [
+                Pipelines\ApplyPercentageTotalDiscount::class,
+                Pipelines\ApplySubtractionTotalDiscount::class,
+            ]);
+
+        // Run the pipeline
+        $finalContext = app(Pipeline::class)
+            ->send($context)
+            ->through($finalPipes)
+            ->thenReturn();
+
+        return $finalContext;
     }
 }

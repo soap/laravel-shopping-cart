@@ -56,8 +56,8 @@ class CouponAdapter implements ExternalCoupon
      */
     public function getMinOrderValue(): ?float
     {
-        if ($this->coupon->data->has('min_order_total')) {
-            return $this->coupon->data->get('min_order_total');
+        if ($this->coupon->data && $this->coupon->data->has('min_order_value')) {
+            return $this->coupon->data->get('min_order_value');
         }
 
         return null;

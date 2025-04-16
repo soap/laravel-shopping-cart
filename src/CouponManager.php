@@ -24,6 +24,7 @@ class CouponManager
     public function __construct()
     {
         $this->couponService = app(CouponServiceInterface::class);
+        $this->populateCoupons();
     }
 
     public function add(string $couponCode)
@@ -96,7 +97,7 @@ class CouponManager
     /**
      * Retrieve a list of all applied coupons.
      */
-    public function getAppliedCoupons(): array
+    public function appliedCoupons(): array
     {
         return collect($this->coupons)
             ->filter(function (array $coupon) {
@@ -139,5 +140,12 @@ class CouponManager
         $this->coupons = [];
 
         return $this;
+    }
+
+    protected function populateCoupons(): void
+    {
+        foreach ($this->couponService->getCoupons() as $coupon) {
+            $this->add($coupon->getCode());
+        }
     }
 }

@@ -786,6 +786,11 @@ class ShoppingCart
         return $this->discountManager->getCoupons();
     }
 
+    public function getAppliedCoupons(): array
+    {
+        return $this->discountManager->getAppliedCoupons();
+    }
+
     public function verifyCoupon(string $couponCode, int|string|null $userId = null): bool
     {
         return $this->discountManager->verifyCoupon($couponCode, $userId);

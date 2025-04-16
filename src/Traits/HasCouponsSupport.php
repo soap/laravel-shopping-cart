@@ -37,7 +37,7 @@ trait HasCouponsSupport
 
     public function verifyCoupon(string $code, int|string|null $userId = null): bool
     {
-        return $this->coupons()->verify($code, $userId);
+        return $this->coupons()->verify($code, $this->cart, $userId);
     }
 
     /**
@@ -49,7 +49,7 @@ trait HasCouponsSupport
      */
     public function applyCoupon(string $code, int|string|null $userId = null): self
     {
-        $this->coupons()->apply($code, $userId);
+        $this->coupons()->apply($code, $this->cart, $userId);
 
         return $this;
     }
@@ -73,6 +73,11 @@ trait HasCouponsSupport
     public function getCouponDiscount(): float
     {
         return $this->coupons()->couponDiscount();
+    }
+
+    public function getAppliedCoupon(): ?array
+    {
+        return $this->coupons()->appliedCoupons();
     }
 
     /**
