@@ -4,7 +4,6 @@ namespace Soap\ShoppingCart;
 
 use Illuminate\Pipeline\Pipeline;
 use Soap\ShoppingCart\Pipelines\AllocateSubtotalDiscounts;
-use Soap\ShoppingCart\Pipelines\ApplyItemDiscounts;
 use Soap\ShoppingCart\Pipelines\ApplyItemsDiscounts;
 use Soap\ShoppingCart\Pipelines\ApplySubtotalDiscounts;
 use Soap\ShoppingCart\Pipelines\CalculationContext;
