@@ -374,14 +374,14 @@ class ShoppingCart
     }
 
     /**
-     * Get the subtotal (sum of price * qty - discount) of the items in the cart.
+     * Get the subtotal (sum of price * qty - discount on item) of the items in the cart.
      *
      * @return float
      */
     public function subtotalFloat()
     {
         return $this->getContent()->reduce(function ($subTotal, CartItem $cartItem) {
-            return $subTotal + $cartItem->subtotal;
+            return $subTotal + $cartItem->subtotal; // subtotal calculated by calculator
         }, 0);
     }
 
@@ -886,7 +886,7 @@ class ShoppingCart
      */
     private function getTableName()
     {
-        return config('shopping-cart.database.table', 'shopping-carts');
+        return config('shopping-cart.database.table', 'shopping_carts');
     }
 
     /**

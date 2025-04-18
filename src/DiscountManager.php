@@ -3,7 +3,11 @@
 namespace Soap\ShoppingCart;
 
 use Illuminate\Pipeline\Pipeline;
-use Soap\ShoppingCart\Pipelines;
+use Soap\ShoppingCart\Pipelines\AllocateSubtotalDiscounts;
+use Soap\ShoppingCart\Pipelines\ApplyItemDiscounts;
+use Soap\ShoppingCart\Pipelines\ApplyItemsDiscounts;
+use Soap\ShoppingCart\Pipelines\ApplySubtotalDiscounts;
+use Soap\ShoppingCart\Pipelines\CalculationContext;
 use Soap\ShoppingCart\Traits\HasCouponsSupport;
 
 class DiscountManager
@@ -33,29 +37,56 @@ class DiscountManager
         return $this->conditionManager;
     }
 
-    public function finalCalculation(): Pipelines\CalculationContext
+    public function calculation(): void
     {
-        $context = new Pipelines\CalculationContext($this->cart->subtotalFloat());
+        $context = new CalculationContext($this->cart->content()->all());
+        $context->appliedCouponCodes = [];
+        $context->couponBreakdown = [];
 
-        // Discount on subtotal amount, order of execution
-        $subtotalPipes = [
-            Pipelines\ApplyPercentageSubtotalDiscount::class,
-            Pipelines\ApplySubtractionSubtotalDiscount::class,
-        ];
+        foreach ($this->couponManager->getAppliedCoupons() as $coupon) {
+            if ($coupon->applies_to === 'subtotal') {
+                if ($coupon->type === 'percent') {
+                    $context->percentSubtotalDiscount += $coupon->value;
+                } elseif ($coupon->type === 'fixed') {
+                    $context->fixedSubtotalDiscount += $coupon->value;
+                }
 
-        $finalPipes = array_merge(
-            $subtotalPipes,
-            [
-                Pipelines\ApplyPercentageTotalDiscount::class,
-                Pipelines\ApplySubtractionTotalDiscount::class,
-            ]);
+                $context->appliedCouponCodes[] = $coupon->code;
 
-        // Run the pipeline
-        $finalContext = app(Pipeline::class)
+                $context->couponBreakdown[] = [
+                    'code' => $coupon->code,
+                    'label' => $coupon->label ?? "คูปอง {$coupon->code}",
+                    'type' => $coupon->type,
+                    'value' => $coupon->value,
+                    'allocated' => 0.0,
+                ];
+            }
+        }
+
+        $context = app(Pipeline::class)
             ->send($context)
-            ->through($finalPipes)
+            ->through([
+                ApplyItemsDiscounts::class,
+                ApplySubtotalDiscounts::class,
+                AllocateSubtotalDiscounts::class,
+            ])
             ->thenReturn();
 
-        return $finalContext;
+        // รวมยอด allocated discount ตามโค้ด
+        foreach ($context->items as $item) {
+            $code = $item->appliedCouponCode ?? null;
+            if (! $code || $item->appliedSubtotalDiscount <= 0) {
+                continue;
+            }
+
+            foreach ($context->couponBreakdown as &$entry) {
+                if ($entry['code'] === $code) {
+                    $entry['allocated'] += $item->appliedSubtotalDiscount;
+                    break;
+                }
+            }
+        }
+
+        $this->cart->discounts = $context;
     }
 }

@@ -96,6 +96,21 @@ class CartItem implements Arrayable, Jsonable
     private $discountRate = 0;
 
     /**
+     * The discount amount (fixed) for cart item
+     *
+     * @var float
+     */
+    private $discountAmount = 0;
+
+    public $proportionalWeight = 0;
+
+    public $appliedSubtotalDiscount = 0;
+
+    public $subtotalLevelDiscountTotal = 0;
+
+    public $appliedCouponCode = [];
+
+    /**
      * The cart instance of the cart item.
      *
      * @var null|string
@@ -290,6 +305,8 @@ class CartItem implements Arrayable, Jsonable
         }
 
         $this->qty = $qty;
+
+        return $this;
     }
 
     /**
@@ -430,7 +447,7 @@ class CartItem implements Arrayable, Jsonable
     {
         $options = Arr::get($attributes, 'options', []);
 
-        return new self($attributes['id'], $attributes['name'], $attributes['price'], $attributes['weight'], $options);
+        return new self($attributes['id'], $attributes['name'], $attributes['price'], $attributes['weight'] ?? 0, $options);
     }
 
     /**
