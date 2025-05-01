@@ -9,12 +9,16 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Session\SessionManager;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\Macroable;
+use Soap\ShoppingCart\Calculation\CartCalculator;
 use Soap\ShoppingCart\Contracts\BuyableInterface;
 use Soap\ShoppingCart\Contracts\InstanceIdentifierInterface;
 use Soap\ShoppingCart\Exceptions\CartAlreadyStoredException;
 use Soap\ShoppingCart\Exceptions\InvalidRowIDException;
 use Soap\ShoppingCart\Exceptions\UnknownModelException;
 
+/**
+ * @property-read float $finalSubtotal
+ */
 class ShoppingCart
 {
     use Macroable;
@@ -63,6 +67,8 @@ class ShoppingCart
      */
     private $discount = 0;
 
+    private $shipping = 0;
+
     /**
      * Defines the tax rate.
      *
@@ -70,9 +76,14 @@ class ShoppingCart
      */
     private $taxRate = 0;
 
-    protected $hooks = [];
-
     protected $discountManager;
+
+    public $discounts;
+
+    /**
+     * Guard name for the cart used when applying coupon.
+     */
+    protected ?string $guard = null;
 
     /**
      * ShoppingCart constructor.
@@ -90,6 +101,21 @@ class ShoppingCart
         );
 
         $this->instance(self::DEFAULT_INSTANCE);
+    }
+
+    public function setGuard(string $guard): self
+    {
+        $this->guard = $guard;
+
+        return $this;
+    }
+
+    /**
+     * Fluent chain support.
+     */
+    public function withGuard(string $guard): self
+    {
+        return $this->setGuard($guard);
     }
 
     /**
@@ -323,41 +349,28 @@ class ShoppingCart
         return $this->getContent()->count();
     }
 
-    /**
-     * Get the total price of the items in the cart.
-     *
-     * @return float
-     */
-    public function totalFloat()
+    public function shippingFloat()
     {
-        return $this->getContent()->reduce(function ($total, CartItem $cartItem) {
-            return $total + $cartItem->total;
-        }, 0);
+        return $this->shipping;
     }
 
-    /**
-     * Get the total price of the items in the cart as formatted string.
-     *
-     * @param  int  $decimals
-     * @param  string  $decimalPoint
-     * @param  string  $thousandSeperator
-     * @return string
-     */
-    public function total($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    public function shipping($decimals = null, $decimalPoint = null, $thousandSeperator = null)
     {
-        return $this->numberFormat($this->totalFloat(), $decimals, $decimalPoint, $thousandSeperator);
+        return $this->numberFormat($this->shippingFloat(), $decimals, $decimalPoint, $thousandSeperator);
     }
 
     /**
      * Get the total tax of the items in the cart.
      *
+     * @since 2.0.0
+     *
      * @return float
      */
     public function taxFloat()
     {
-        return $this->getContent()->reduce(function ($tax, CartItem $cartItem) {
-            return $tax + $cartItem->taxTotal;
-        }, 0);
+        return $this->getContent()->reduce(function ($tax, CartItem $item) {
+            return $tax + $item->tax;
+        }, 0.0);
     }
 
     /**
@@ -374,61 +387,13 @@ class ShoppingCart
     }
 
     /**
-     * Get the subtotal (sum of price * qty - discount on item) of the items in the cart.
+     * Get the price of the items in the cart before any discount.
+     *
+     * @since 2.0.0
      *
      * @return float
      */
-    public function subtotalFloat()
-    {
-        return $this->getContent()->reduce(function ($subTotal, CartItem $cartItem) {
-            return $subTotal + $cartItem->subtotal; // subtotal calculated by calculator
-        }, 0);
-    }
-
-    /**
-     * Get the subtotal (total - tax) of the items in the cart as formatted string.
-     *
-     * @param  int  $decimals
-     * @param  string  $decimalPoint
-     * @param  string  $thousandSeperator
-     * @return string
-     */
-    public function subtotal($decimals = null, $decimalPoint = null, $thousandSeperator = null)
-    {
-        return $this->numberFormat($this->subtotalFloat(), $decimals, $decimalPoint, $thousandSeperator);
-    }
-
-    /**
-     * Get the discount of the items in the cart.
-     *
-     * @return float
-     */
-    public function discountFloat()
-    {
-        return $this->getContent()->reduce(function ($discount, CartItem $cartItem) {
-            return $discount + $cartItem->discountTotal;
-        }, 0);
-    }
-
-    /**
-     * Get the discount of the items in the cart as formatted string.
-     *
-     * @param  int  $decimals
-     * @param  string  $decimalPoint
-     * @param  string  $thousandSeperator
-     * @return string
-     */
-    public function discount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
-    {
-        return $this->numberFormat($this->discountFloat(), $decimals, $decimalPoint, $thousandSeperator);
-    }
-
-    /**
-     * Get the price of the items in the cart (not rounded).
-     *
-     * @return float
-     */
-    public function initialFloat()
+    public function initialSubtotalFloat()
     {
         return $this->getContent()->reduce(function ($initial, CartItem $cartItem) {
             return $initial + ($cartItem->qty * $cartItem->price);
@@ -442,35 +407,116 @@ class ShoppingCart
      * @param  string  $decimalPoint
      * @param  string  $thousandSeperator
      * @return string
+     *
+     * @since 2.0.0
      */
-    public function initial($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    public function initialSubtotal($decimals = null, $decimalPoint = null, $thousandSeperator = null)
     {
-        return $this->numberFormat($this->initialFloat(), $decimals, $decimalPoint, $thousandSeperator);
+        return $this->numberFormat($this->initialSubtotalFloat(), $decimals, $decimalPoint, $thousandSeperator);
     }
 
     /**
-     * Get the price of the items in the cart (previously rounded).
+     * Get the subtotal after item discounts. Not including subtotal-level discounts (distributed to items)
      *
-     * @return float
+     * @since 2.0.0
      */
-    public function priceTotalFloat()
+    public function subtotalAfterItemDiscountsFloat(): float
     {
-        return $this->getContent()->reduce(function ($initial, CartItem $cartItem) {
-            return $initial + $cartItem->priceTotal;
+        return $this->getContent()->reduce(function ($sum, CartItem $item) {
+            return $sum + (
+                $item->price * $item->qty - ($item->appliedItemDiscount ?? 0)
+            );
         }, 0);
     }
 
     /**
-     * Get the price of the items in the cart as formatted string.
+     * Get the subtotal after item discounts. Not including subtotal-level discounts (distributed to items)
      *
-     * @param  int  $decimals
-     * @param  string  $decimalPoint
-     * @param  string  $thousandSeperator
-     * @return string
+     * @since 2.0.0
      */
-    public function priceTotal($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    public function subtotalAfterItemDiscounts($decimals = null, $decimalPoint = null, $thousandSeperator = null)
     {
-        return $this->numberFormat($this->priceTotalFloat(), $decimals, $decimalPoint, $thousandSeperator);
+        return $this->numberFormat($this->subtotalAfterItemDiscountsFloat(), $decimals, $decimalPoint, $thousandSeperator);
+    }
+
+    /**
+     * Get the subtotal after item discounts and subtotal-level discounts.
+     *
+     * @since 2.0.0
+     */
+    public function finalSubtotalFloat(): float
+    {
+        return $this->getContent()->reduce(function ($subtotal, CartItem $item) {
+            return $subtotal + (
+                ($item->price * $item->qty)
+                - ($item->appliedItemDiscount ?? 0)
+                - ($item->appliedSubtotalDiscount ?? 0)
+            );
+        }, 0);
+    }
+
+    /**
+     * @since 2.0.0
+     */
+    public function finalSubtotal($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    {
+        return $this->numberFormat($this->finalSubtotalFloat(), $decimals, $decimalPoint, $thousandSeperator);
+    }
+
+    /**
+     * @since 2.0.0
+     */
+    public function grossTotalBeforeTotalDiscountFloat(): float
+    {
+        return
+            $this->finalSubtotalFloat()
+            + $this->shippingFloat()
+            + $this->taxFloat();
+    }
+
+    /**
+     * @since 2.0.0
+     */
+    public function grossTotalBeforeTotalDiscount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    {
+        return $this->numberFormat($this->grossTotalBeforeTotalDiscountFloat(), $decimals, $decimalPoint, $thousandSeperator);
+    }
+
+    /**
+     * Get the final payable amount of the cart.
+     */
+    public function finalPayableFloat(): float
+    {
+        return max(
+            $this->finalSubtotalFloat()
+                + $this->shippingFloat()
+                + $this->taxFloat()
+                - $this->totalLevelDiscountFloat(),
+            0.0
+        );
+    }
+
+    /**
+     * @since 2.0.0
+     */
+    public function finalPayable($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    {
+        return $this->numberFormat($this->finalPayableFloat(), $decimals, $decimalPoint, $thousandSeperator);
+    }
+
+    /**
+     * Get the total level discount of the cart.
+     *
+     * @since 2.0.0
+     */
+    public function totalLevelDiscountFloat(): float
+    {
+        return $this->discounts->totalLevelDiscount;
+    }
+
+    public function totalLevelDiscount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    {
+        return $this->numberFormat($this->totalLevelDiscountFloat(), $decimals, $decimalPoint, $thousandSeperator);
     }
 
     /**
@@ -764,6 +810,10 @@ class ShoppingCart
     /**
      * Magic method to make accessing the total, tax and subtotal properties possible.
      *
+     * @internal provide backwards compatibility with version 1.x
+     *
+     * @deprecated since version 3.0.0
+     *
      * @param  string  $attribute
      * @return float|null|string
      */
@@ -771,11 +821,11 @@ class ShoppingCart
     {
         switch ($attribute) {
             case 'total':
-                return $this->total();
+                return $this->finalPayable();
             case 'tax':
                 return $this->tax();
             case 'subtotal':
-                return $this->subtotal();
+                return $this->finalSubtotal();
             default:
                 return null;
         }
@@ -791,16 +841,27 @@ class ShoppingCart
         return $this->discountManager->getAppliedCoupons();
     }
 
-    public function verifyCoupon(string $couponCode, int|string|null $userId = null): bool
+    public function verifyCoupon(string $couponCode, int|string|null $userId = null, ?string $guard = null): bool
     {
-        return $this->discountManager->verifyCoupon($couponCode, $userId);
+        return $this->discountManager->verifyCoupon($couponCode, $userId, $guard);
     }
 
-    public function applyCoupon(string $couponCode, int|string|null $userId = null): self
+    public function applyCoupon(string $couponCode, int|string|null $userId = null, ?string $guard = null): self
     {
-        $this->discountManager->applyCoupon($couponCode, $userId);
+        if (! $guard) {
+            $guard = $this->guard;
+        }
+        $this->discountManager->applyCoupon($couponCode, $userId, $guard);
+        $this->discountManager->calculateDiscounts();
+        $calculator = new CartCalculator;
+        $calculator->calculate($this);
 
         return $this;
+    }
+
+    public function appliedCoupons(): array
+    {
+        return $this->discountManager->coupons()->appliedCoupons();
     }
 
     /**

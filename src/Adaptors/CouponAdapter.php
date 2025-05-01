@@ -3,14 +3,14 @@
 namespace Soap\ShoppingCart\Adaptors;
 
 use Carbon\Carbon;
-use MichaelRubel\Couponables\Models\Coupon;
+use MichaelRubel\Couponables\Models\Contracts\CouponContract;
 use Soap\ShoppingCart\Contracts\CouponInterface as ExternalCoupon;
 
 class CouponAdapter implements ExternalCoupon
 {
     protected $coupon;
 
-    public function __construct(Coupon $coupon)
+    public function __construct(CouponContract $coupon)
     {
         $this->coupon = $coupon;
     }
@@ -26,7 +26,7 @@ class CouponAdapter implements ExternalCoupon
         return $this->coupon->type; // 'percentage', 'subtraction', or 'fixed'
     }
 
-    public function getDiscountValue($total): float
+    public function getDiscountValue(): float
     {
         return $this->coupon->value; // This is the discount value
     }
@@ -58,6 +58,15 @@ class CouponAdapter implements ExternalCoupon
     {
         if ($this->coupon->data && $this->coupon->data->has('min_order_value')) {
             return $this->coupon->data->get('min_order_value');
+        }
+
+        return null;
+    }
+
+    public function getDiscountLimit(): ?float
+    {
+        if ($this->coupon->data && $this->coupon->data->has('discount_limit')) {
+            return $this->coupon->data->get('discount_limit');
         }
 
         return null;

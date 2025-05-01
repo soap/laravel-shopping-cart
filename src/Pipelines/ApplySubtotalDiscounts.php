@@ -13,7 +13,7 @@ class ApplySubtotalDiscounts
         $context->subtotalLevelDiscount = $discountFromPercent + $fixedDiscount;
 
         $context->subtotalDiscountMetadata = [
-            'codes' => $context->appliedCouponCodes ?? [],
+            'codes' => $context->appliedCouponCodes['subtotal'] ?? [],
             'percent' => $percentDiscount,
             'fixed' => $fixedDiscount,
             'total' => $context->subtotalLevelDiscount,
