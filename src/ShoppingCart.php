@@ -70,6 +70,10 @@ class ShoppingCart
      */
     private $taxRate = 0;
 
+    protected $hooks = [];
+
+    protected $discountManager;
+
     /**
      * ShoppingCart constructor.
      */
@@ -78,6 +82,12 @@ class ShoppingCart
         $this->session = $session;
         $this->events = $events;
         $this->taxRate = config('shopping-cart.tax');
+
+        $this->discountManager = new DiscountManager(
+            $this,
+            app(CouponManager::class),
+            app(ConditionManager::class)
+        );
 
         $this->instance(self::DEFAULT_INSTANCE);
     }
@@ -364,14 +374,14 @@ class ShoppingCart
     }
 
     /**
-     * Get the subtotal (total - tax) of the items in the cart.
+     * Get the subtotal (sum of price * qty - discount on item) of the items in the cart.
      *
      * @return float
      */
     public function subtotalFloat()
     {
         return $this->getContent()->reduce(function ($subTotal, CartItem $cartItem) {
-            return $subTotal + $cartItem->subtotal;
+            return $subTotal + $cartItem->subtotal; // subtotal calculated by calculator
         }, 0);
     }
 
@@ -542,11 +552,17 @@ class ShoppingCart
         $this->session->put($this->instance, $content);
     }
 
+    public function setTaxRate($rowId, $taxRate)
+    {
+        $this->setTax($rowId, $taxRate);
+    }
+
     /**
      * Set the global tax rate for the cart.
      * This will set the tax rate for all items.
      *
      * @param  float  $taxRate
+     * @return void
      */
     public function setGlobalTax($taxRate)
     {
@@ -558,6 +574,11 @@ class ShoppingCart
                 $item->setTaxRate($this->taxRate);
             });
         }
+    }
+
+    public function setGlobalTaxRate($taxRate)
+    {
+        $this->setGlobalTax($taxRate);
     }
 
     /**
@@ -760,6 +781,28 @@ class ShoppingCart
         }
     }
 
+    public function getCoupons(): array
+    {
+        return $this->discountManager->getCoupons();
+    }
+
+    public function getAppliedCoupons(): array
+    {
+        return $this->discountManager->getAppliedCoupons();
+    }
+
+    public function verifyCoupon(string $couponCode, int|string|null $userId = null): bool
+    {
+        return $this->discountManager->verifyCoupon($couponCode, $userId);
+    }
+
+    public function applyCoupon(string $couponCode, int|string|null $userId = null): self
+    {
+        $this->discountManager->applyCoupon($couponCode, $userId);
+
+        return $this;
+    }
+
     /**
      * Get the carts content, if there is no cart content set yet, return a new empty Collection.
      *
@@ -843,7 +886,7 @@ class ShoppingCart
      */
     private function getTableName()
     {
-        return config('shopping-cart.database.table', 'shopping-carts');
+        return config('shopping-cart.database.table', 'shopping_carts');
     }
 
     /**
