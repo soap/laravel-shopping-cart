@@ -119,6 +119,7 @@ This package is based on [anayarojo/shoppingcart 's Laravel Shoppingcart](https:
 - Version 1.0.x is a fork of [bumbummen99's LaravelShoppingcart](https://github.com/bumbummen99/LaravelShoppingcart) extended with minor features compatible with Laravel 10+. An example integration can be [found here](https://github.com/bumbummen99/LaravelShoppingcartDemo).
 - This package does, when being used with PostgreSQL, encode the cart content to base64 before storing into database.
 - I wiil add two main features to next coming version; <strong>conditions and Coupon support on cart</strong>.
+- From version 2.0, it is a breaking compatibility with version 1.x. I have not updated the document for version 2.0 yet.
 
 ## Table of Contents
 Look at one of the following topics to learn more about Soap\ShoppingCart
