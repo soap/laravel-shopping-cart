@@ -265,6 +265,8 @@ class ShoppingCart
 
         $this->events->dispatch('cart.updated', $cartItem);
 
+        $this->calculate();
+
         return $cartItem;
     }
 
@@ -287,6 +289,8 @@ class ShoppingCart
         $this->session->put($this->instance, $content);
 
         $this->events->dispatch('cart.removed', $cartItem);
+
+        $this->calculate();
     }
 
     /**
@@ -353,7 +357,7 @@ class ShoppingCart
 
     public function shippingFloat()
     {
-        return $this->shipping;
+        return $this->shipping ?? 0.0;
     }
 
     public function shipping($decimals = null, $decimalPoint = null, $thousandSeperator = null)
@@ -513,7 +517,7 @@ class ShoppingCart
      */
     public function totalLevelDiscountFloat(): float
     {
-        return $this->discounts->totalLevelDiscount;
+        return $this->discounts->totalLevelDiscount ?? 0.0;
     }
 
     public function totalLevelDiscount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
@@ -825,10 +829,12 @@ class ShoppingCart
     {
         switch ($attribute) {
             case 'total':
+            case 'finalPayable':
                 return $this->finalPayable();
             case 'tax':
                 return $this->tax();
             case 'subtotal':
+            case 'finalSubtotal':
                 return $this->finalSubtotal();
             default:
                 return null;
