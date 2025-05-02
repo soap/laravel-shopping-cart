@@ -208,6 +208,8 @@ class ShoppingCart
             $this->events->dispatch('cart.added', $item);
         }
 
+        $this->calculate();
+
         return $item;
     }
 
@@ -749,6 +751,7 @@ class ShoppingCart
         $this->updatedAt = Carbon::parse(data_get($stored, 'updated_at'));
 
         $this->getConnection()->table($this->getTableName())->where(['identifier' => $identifier, 'instance' => $currentInstance])->delete();
+        $this->calculate();
     }
 
     /**
@@ -803,6 +806,7 @@ class ShoppingCart
         }
 
         $this->events->dispatch('cart.merged');
+        $this->calculate();
 
         return true;
     }
@@ -852,9 +856,7 @@ class ShoppingCart
             $guard = $this->guard;
         }
         $this->discountManager->applyCoupon($couponCode, $userId, $guard);
-        $this->discountManager->calculateDiscounts();
-        $calculator = new CartCalculator;
-        $calculator->calculate($this);
+        $this->calculate();
 
         return $this;
     }
@@ -876,6 +878,13 @@ class ShoppingCart
         }
 
         return new Collection;
+    }
+
+    protected function calculate()
+    {
+        $this->discountManager->calculateDiscounts();
+        $calculator = new CartCalculator;
+        $calculator->calculate($this);
     }
 
     /**
