@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shopping-cart` will be documented in this file.
 
+## v2.0.4 - 2025-05-02
+
+### What's Changed
+
+* Develop by @soap in https://github.com/soap/laravel-shopping-cart/pull/5
+
+**Full Changelog**: https://github.com/soap/laravel-shopping-cart/compare/v2.0.3...v2.0.4
+
 ## v2.0.3 - 2025-05-02
 
 ### What's Changed
