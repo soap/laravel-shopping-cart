@@ -85,6 +85,8 @@ class ShoppingCart
      */
     protected ?string $guard = null;
 
+    protected $dirty = true;
+
     /**
      * ShoppingCart constructor.
      */
@@ -208,7 +210,7 @@ class ShoppingCart
             $this->events->dispatch('cart.added', $item);
         }
 
-        $this->calculate();
+        $this->handleCartChanged();
 
         return $item;
     }
@@ -265,7 +267,7 @@ class ShoppingCart
 
         $this->events->dispatch('cart.updated', $cartItem);
 
-        $this->calculate();
+        $this->handleCartChanged();
 
         return $cartItem;
     }
@@ -290,7 +292,7 @@ class ShoppingCart
 
         $this->events->dispatch('cart.removed', $cartItem);
 
-        $this->calculate();
+        $this->handleCartChanged();
     }
 
     /**
@@ -510,6 +512,16 @@ class ShoppingCart
         return $this->numberFormat($this->finalPayableFloat(), $decimals, $decimalPoint, $thousandSeperator);
     }
 
+    public function subtotalLevelDiscountFloat(): float
+    {
+        return $this->discounts->subtotalLevelDiscount ?? 0.0;
+    }
+
+    public function subtotalLevelDiscount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    {
+        return $this->numberFormat($this->subtotalLevelDiscountFloat(), $decimals, $decimalPoint, $thousandSeperator);
+    }
+
     /**
      * Get the total level discount of the cart.
      *
@@ -523,6 +535,16 @@ class ShoppingCart
     public function totalLevelDiscount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
     {
         return $this->numberFormat($this->totalLevelDiscountFloat(), $decimals, $decimalPoint, $thousandSeperator);
+    }
+
+    public function discountFloat()
+    {
+        return $this->subtotalLevelDiscountFloat() + $this->totalLevelDiscountFloat();
+    }
+
+    public function discount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    {
+        return $this->numberFormat($this->discountFloat(), $decimals, $decimalPoint, $thousandSeperator);
     }
 
     /**
@@ -755,7 +777,7 @@ class ShoppingCart
         $this->updatedAt = Carbon::parse(data_get($stored, 'updated_at'));
 
         $this->getConnection()->table($this->getTableName())->where(['identifier' => $identifier, 'instance' => $currentInstance])->delete();
-        $this->calculate();
+        $this->handleCartChanged();
     }
 
     /**
@@ -810,7 +832,7 @@ class ShoppingCart
         }
 
         $this->events->dispatch('cart.merged');
-        $this->calculate();
+        $this->handleCartChanged();
 
         return true;
     }
@@ -831,6 +853,8 @@ class ShoppingCart
             case 'total':
             case 'finalPayable':
                 return $this->finalPayable();
+            case 'discount':
+                return $this->discount();
             case 'tax':
                 return $this->tax();
             case 'subtotal':
@@ -856,15 +880,15 @@ class ShoppingCart
         return $this->discountManager->verifyCoupon($couponCode, $userId, $guard);
     }
 
-    public function applyCoupon(string $couponCode, int|string|null $userId = null, ?string $guard = null): self
+    public function applyCoupon(string $couponCode, int|string|null $userId = null, ?string $guard = null): bool
     {
         if (! $guard) {
             $guard = $this->guard;
         }
         $this->discountManager->applyCoupon($couponCode, $userId, $guard);
-        $this->calculate();
+        $this->handleCartChanged();
 
-        return $this;
+        return true;
     }
 
     public function appliedCoupons(): array
@@ -886,7 +910,7 @@ class ShoppingCart
         return new Collection;
     }
 
-    protected function calculate()
+    protected function handleCartChanged()
     {
         $this->discountManager->calculateDiscounts();
         $calculator = new CartCalculator;

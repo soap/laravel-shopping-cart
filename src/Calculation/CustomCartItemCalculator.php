@@ -31,7 +31,7 @@ class CustomCartItemCalculator implements CalculatorInterface
             'totalDiscount' => self::getAttribute('itemLevelDiscountTotal', $item) + $applied,
 
             'finalSubtotal' => self::getAttribute('subtotalAfterItemDiscount', $item) - $applied,
-
+            'subtotal' => self::getAttribute('finalSubtotal', $item), // backward compatibility
             'discountBreakdown' => array_filter([
                 [
                     'label' => 'ส่วนลดรายการสินค้า',
