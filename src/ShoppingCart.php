@@ -878,7 +878,7 @@ class ShoppingCart
         return $this->discountManager->verifyCoupon($couponCode, $userId, $guard);
     }
 
-    public function applyCoupon(string $couponCode, int|string|null $userId = null, ?string $guard = null): self
+    public function applyCoupon(string $couponCode, int|string|null $userId = null, ?string $guard = null): bool
     {
         if (! $guard) {
             $guard = $this->guard;
@@ -886,7 +886,7 @@ class ShoppingCart
         $this->discountManager->applyCoupon($couponCode, $userId, $guard);
         $this->calculate();
 
-        return $this;
+        return true;
     }
 
     public function appliedCoupons(): array
