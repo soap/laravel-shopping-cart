@@ -519,6 +519,7 @@ class ShoppingCart
     {
         return $this->numberFormat($this->subtotalLevelDiscountFloat(), $decimals, $decimalPoint, $thousandSeperator);
     }
+
     /**
      * Get the total level discount of the cart.
      *
