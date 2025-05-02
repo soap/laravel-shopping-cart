@@ -35,9 +35,9 @@ trait HasCouponsSupport
         return $this;
     }
 
-    public function verifyCoupon(string $code, int|string|null $userId = null): bool
+    public function verifyCoupon(string $code, int|string|null $userId = null, ?string $guard = null): bool
     {
-        return $this->coupons()->verify($code, $this->cart, $userId);
+        return $this->coupons()->verify($code, $this->cart, $userId, $guard);
     }
 
     /**
@@ -47,9 +47,9 @@ trait HasCouponsSupport
      * @param  int|string|null  $userId  Optional. The ID of the user to whom the coupon applies.
      * @return $this
      */
-    public function applyCoupon(string $code, int|string|null $userId = null): self
+    public function applyCoupon(string $code, int|string|null $userId = null, ?string $guard = null): self
     {
-        $this->coupons()->apply($code, $this->cart, $userId);
+        $this->coupons()->apply($code, $this->cart, $userId, $guard);
 
         return $this;
     }

@@ -6,6 +6,7 @@ use Illuminate\Pipeline\Pipeline;
 use Soap\ShoppingCart\Pipelines\AllocateSubtotalDiscounts;
 use Soap\ShoppingCart\Pipelines\ApplyItemsDiscounts;
 use Soap\ShoppingCart\Pipelines\ApplySubtotalDiscounts;
+use Soap\ShoppingCart\Pipelines\ApplyTotalDiscounts;
 use Soap\ShoppingCart\Pipelines\CalculationContext;
 use Soap\ShoppingCart\Traits\HasCouponsSupport;
 
@@ -36,27 +37,58 @@ class DiscountManager
         return $this->conditionManager;
     }
 
-    public function calculation(): void
+    /**
+     * Calculate the discounts for the cart.
+     * Get discount from coupon and condition manager.
+     * The discount has three levels; item, subtotal, and total.
+     * for subtotal level, we need to distribute the discount to each item.
+     * We need to calculate the discount for each item first.
+     * Then we need to calculate the subtotal discount.
+     * Then distribute the subtotal discount to each item.
+     * After that we need to calculate the total discount.
+     *
+     * Then the calculator class will use the discount to calculate to required values.
+     */
+    public function calculateDiscounts(): void
     {
         $context = new CalculationContext($this->cart->content()->all());
         $context->appliedCouponCodes = [];
         $context->couponBreakdown = [];
-
-        foreach ($this->couponManager->getAppliedCoupons() as $coupon) {
-            if ($coupon->applies_to === 'subtotal') {
-                if ($coupon->type === 'percent') {
-                    $context->percentSubtotalDiscount += $coupon->value;
-                } elseif ($coupon->type === 'fixed') {
-                    $context->fixedSubtotalDiscount += $coupon->value;
+        /** Coupon discount */
+        foreach ($this->couponManager->appliedCoupons() as $couponData) {
+            $coupon = $couponData['coupon'];
+            if ($coupon->getAppliesTarget() === 'subtotal') {
+                if ($coupon->getDiscountType() === 'percent') {
+                    $context->percentSubtotalDiscount += $coupon->getDiscountValue();
+                } elseif ($coupon->getDiscountType() === 'substraction') {
+                    $context->fixedSubtotalDiscount += $coupon->getDiscountValue();
                 }
 
-                $context->appliedCouponCodes[] = $coupon->code;
+                $context->appliedCouponCodes[] = $coupon->getCode();
 
                 $context->couponBreakdown[] = [
-                    'code' => $coupon->code,
-                    'label' => $coupon->label ?? "คูปอง {$coupon->code}",
-                    'type' => $coupon->type,
-                    'value' => $coupon->value,
+                    'code' => $coupon->getCode(),
+                    'label' => $coupon->label ?? "คูปอง {$coupon->getCode()}",
+                    'type' => $coupon->getDiscountType(),
+                    'value' => $coupon->getDiscountValue(),
+                    'level' => $coupon->getAppliesTarget(),
+                    'allocated' => 0.0,
+                ];
+            } elseif ($coupon->getAppliesTarget() === 'total') {
+                if ($coupon->getDiscountType() === 'percent') {
+                    $context->percentTotalDiscount += $coupon->getDiscountValue();
+                } elseif ($coupon->getDiscountType() === 'substraction') {
+                    $context->fixedTotalDiscount += $coupon->getDiscountValue();
+                }
+
+                $context->appliedCouponCodes[] = $coupon->getCode();
+
+                $context->couponBreakdown[] = [
+                    'code' => $coupon->getCode(),
+                    'label' => $coupon->label ?? "คูปอง {$coupon->getCode()}",
+                    'type' => $coupon->getDiscountType(),
+                    'value' => $coupon->getDiscountValue(),
+                    'level' => $coupon->getAppliesTarget(),
                     'allocated' => 0.0,
                 ];
             }
@@ -68,6 +100,7 @@ class DiscountManager
                 ApplyItemsDiscounts::class,
                 ApplySubtotalDiscounts::class,
                 AllocateSubtotalDiscounts::class,
+                ApplyTotalDiscounts::class,
             ])
             ->thenReturn();
 

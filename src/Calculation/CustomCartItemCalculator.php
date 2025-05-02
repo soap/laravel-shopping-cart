@@ -15,12 +15,23 @@ class CustomCartItemCalculator implements CalculatorInterface
         $applied = $item->appliedSubtotalDiscount ?? 0;
 
         return match ($attribute) {
-            'originalSubtotal' => $price * $qty,
+            // Subtotal before any discount
+            'initialSubtotal' => $price * $qty,
+            // Subtotal after item-level discount
             'subtotalAfterItemDiscount' => max(0, $price - ($price * $rate) - $fixed) * $qty,
+            // Subtotal after all discounts for this item used to calculate tax
+            'taxableSubtotal' => max(0, $price - ($price * $rate) - $fixed - $applied) * $qty,
+            // Tax amount of this item
+            'tax' => self::getAttribute('taxableSubtotal', $item) * ($item->taxRate / 100),
+            // total discount for item level
             'itemLevelDiscountTotal' => ($price * $qty) - self::getAttribute('subtotalAfterItemDiscount', $item),
+
             'subtotalLevelDiscountTotal' => $applied,
+
             'totalDiscount' => self::getAttribute('itemLevelDiscountTotal', $item) + $applied,
+
             'finalSubtotal' => self::getAttribute('subtotalAfterItemDiscount', $item) - $applied,
+
             'discountBreakdown' => array_filter([
                 [
                     'label' => 'ส่วนลดรายการสินค้า',

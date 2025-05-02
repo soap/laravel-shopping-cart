@@ -6,13 +6,15 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Arr;
 use ReflectionClass;
-use Soap\ShoppingCart\Calculation\DefaultCalculator;
+use Soap\ShoppingCart\Calculation\CustomCartItemCalculator;
 use Soap\ShoppingCart\Contracts\BuyableInterface;
 use Soap\ShoppingCart\Contracts\CalculatorInterface;
 use Soap\ShoppingCart\Exceptions\InvalidCalculatorException;
 
 /**
  * @property-read float $discountTotal
+ * @property-read float $finalSubtotal
+ * @property-read float $subtotalAfterItemDiscount
  * @property-read float $priceTarget
  * @property-read float $priceNet
  * @property-read float $priceTotal
@@ -108,7 +110,7 @@ class CartItem implements Arrayable, Jsonable
 
     public $subtotalLevelDiscountTotal = 0;
 
-    public $appliedCouponCode = [];
+    public $appliedCouponCode = null;
 
     /**
      * The cart instance of the cart item.
@@ -211,7 +213,8 @@ class CartItem implements Arrayable, Jsonable
      */
     public function subtotal($decimals = null, $decimalPoint = null, $thousandSeperator = null)
     {
-        return $this->numberFormat($this->subtotal, $decimals, $decimalPoint, $thousandSeperator);
+        // changes from subtoal in as in Deafault to subtotalAfterItemDiscount
+        return $this->numberFormat($this->subtotalAfterItemDiscount, $decimals, $decimalPoint, $thousandSeperator);
     }
 
     /**
@@ -419,7 +422,7 @@ class CartItem implements Arrayable, Jsonable
                 return round($this->weight * $this->qty, $decimals);
         }
 
-        $class = new ReflectionClass(config('shopping-cart.calculator', DefaultCalculator::class));
+        $class = new ReflectionClass(config('shopping-cart.calculator', CustomCartItemCalculator::class));
         if (! $class->implementsInterface(CalculatorInterface::class)) {
             throw new InvalidCalculatorException('The configured Calculator seems to be invalid. Calculators have to implement the CalculatorInterface.');
         }

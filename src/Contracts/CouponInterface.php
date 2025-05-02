@@ -25,11 +25,8 @@ interface CouponInterface
     /**
      * Get the discount value of the coupon.
      * This will be a percentage or a fixed amount depending on the discount type.
-     *
-     * @param  float  $total  The total amount of the cart to apply for discount.
-     *                        This is the total amount before the discount is applied.
      */
-    public function getDiscountValue($total): float;
+    public function getDiscountValue(): float;
 
     /**
      * Get the type of items the coupon applies to.
@@ -56,4 +53,12 @@ interface CouponInterface
      * This is optional and can be null.
      */
     public function getMinOrderValue(): ?float;
+
+    /**
+     * Get the maximum discount value for the coupon.
+     * This is the maximum amount that the coupon can discount.
+     * This is used to prevent the coupon from being used on very large orders.
+     * This is optional and can be null.
+     */
+    public function getDiscountLimit(): ?float;
 }

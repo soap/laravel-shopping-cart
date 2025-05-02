@@ -3,6 +3,9 @@
 namespace Soap\ShoppingCart;
 
 use Soap\ShoppingCart\Contracts\CouponServiceInterface;
+use Soap\ShoppingCart\Exceptions\CouponExpiredException;
+use Soap\ShoppingCart\Exceptions\CouponMinimumOrderValueException;
+use Soap\ShoppingCart\Exceptions\CouponNotFoundException;
 
 class CouponManager
 {
@@ -72,7 +75,7 @@ class CouponManager
         return $this->coupons;
     }
 
-    public function apply(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null): self
+    public function apply(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null, ?string $guard = null): self
     {
         $coupon = $this->get($couponCode);
 
@@ -81,17 +84,35 @@ class CouponManager
         }
 
         // Apply the coupon to the cart.
-        $this->couponService->applyCoupon($couponCode, $cart->subtotalFloat(), $userId);
+        $appliedCoupon = $this->couponService->applyCoupon($couponCode, $cart->finalSubtotal(), $userId, $guard);
+
+        if (! $appliedCoupon) {
+            throw new \Exception("Failed to apply coupon: {$couponCode}");
+        }
 
         // Mark the coupon as applied.
-        $this->coupons[$couponCode]['applied'] = true;
+        $this->coupons[$appliedCoupon->getCode()]['applied'] = true;
 
         return $this;
     }
 
-    public function verify(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null): bool
+    public function verify(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null, ?string $guard = null): bool
     {
-        return $this->couponService->verifyCoupon($couponCode, $cart->subtotalFloat(), $userId);
+        $coupon = $this->couponService->getCouponByCode($couponCode);
+
+        if (! $coupon) {
+            throw new CouponNotFoundException("Coupon not found: {$couponCode}");
+        }
+
+        if ($coupon->isExpired()) {
+            throw new CouponExpiredException("Coupon expired: {$couponCode}");
+        }
+
+        if ($coupon->getMinOrderValue() !== null && $cart->finalSubtotalFloat() < $coupon->getMinOrderValue()) {
+            throw new CouponMinimumOrderValueException("Coupon minimum order value not met: {$couponCode}");
+        }
+
+        return true;
     }
 
     /**

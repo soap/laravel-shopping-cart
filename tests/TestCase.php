@@ -3,9 +3,11 @@
 namespace Soap\ShoppingCart\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Orchestra\Testbench\Attributes\WithMigration;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Soap\ShoppingCart\ShoppingCartServiceProvider;
 
+#[WithMigration]
 class TestCase extends Orchestra
 {
     protected function setUp(): void

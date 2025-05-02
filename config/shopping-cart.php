@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'calculator' => \Soap\ShoppingCart\Calculation\DefaultCalculator::class,
+    'calculator' => \Soap\ShoppingCart\Calculation\CustomCartItemCalculator::class,
 
     /*
     |--------------------------------------------------------------------------

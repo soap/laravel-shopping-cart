@@ -2,7 +2,10 @@
 
 namespace Soap\ShoppingCart\Services;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use MichaelRubel\Couponables\Models\Coupon as ExternalCoupon;
+use MichaelRubel\Couponables\Services\Contracts\CouponServiceContract;
 use Soap\ShoppingCart\Adaptors\CouponAdapter;
 use Soap\ShoppingCart\Contracts\CouponInterface;
 use Soap\ShoppingCart\Contracts\CouponServiceInterface;
@@ -29,29 +32,95 @@ class CouponService implements CouponServiceInterface
         return new CouponAdapter($externalCoupon);
     }
 
-    public function verifyCoupon(string $couponCode, $orderAmount = 0, int|string|null $userId = null): bool
+    public function applyCoupon(string $couponCode, $orderAmount = 0, int|string|null $userId = null, ?string $guard = null): ?CouponInterface
     {
-        $coupon = $this->getCouponByCode($couponCode);
+        $service = app(CouponServiceContract::class);
+        $coupon = $service->getCoupon($couponCode);
 
-        if (! $coupon) {
-            return false;
+        $user = $this->resolveUser($userId, $guard);
+        if (! $user) {
+            throw new \Exception('No authenticated user found to apply coupon.');
         }
 
-        if ($coupon->isExpired()) {
-            return false;
+        $user = $this->assertModel($user);
+
+        // MichaelRubel\Couponables\Services\Contracts\CouponServiceContract::applyCoupon() method
+        $appliedCoupon = $service->applyCoupon($coupon, $user, null);
+
+        if (! $appliedCoupon) {
+            return null;
         }
 
-        if ($coupon->getMinOrderValue() !== null && $orderAmount < $coupon->getMinOrderValue()) {
-            return false;
-        }
-
-        return true;
+        return new CouponAdapter($appliedCoupon);
     }
 
-    public function applyCoupon(string $couponCode, $orderAmount = 0, int|string|null $userId = null): void
+    /**
+     * Resolve the user based on the provided user ID or guard.
+     * Supports multiple guards with different models.
+     */
+    protected function resolveUser(int|string|null $userId = null, ?string $guard = null): ?\Illuminate\Contracts\Auth\Authenticatable
     {
-        // Apply the coupon to the cart.
-        // This is where you would implement the logic to apply the coupon discount to the cart.
-        // For example, you might update the cart's total or add a discount line item.
+        if ($userId) {
+            if ($guard) {
+                $provider = config("auth.guards.{$guard}.provider");
+
+                if (! $provider) {
+                    return null;
+                }
+
+                $modelClass = config("auth.providers.{$provider}.model");
+
+                if (! class_exists($modelClass)) {
+                    return null;
+                }
+
+                return $modelClass::find($userId);
+            }
+
+            foreach (config('auth.guards') as $guardName => $guardConfig) {
+                $provider = $guardConfig['provider'] ?? null;
+
+                if (! $provider) {
+                    continue;
+                }
+
+                $modelClass = config('auth.providers.'.$provider.'.model');
+
+                if (class_exists($modelClass)) {
+                    $user = $modelClass::find($userId);
+
+                    if ($user) {
+                        return $user;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        if ($guard) {
+            if (auth($guard)->check()) {
+                return auth($guard)->user();
+            }
+
+            return null;
+        }
+
+        foreach (array_keys(config('auth.guards')) as $guardName) {
+            if (auth($guardName)->check()) {
+                return auth($guardName)->user();
+            }
+        }
+
+        return null;
+    }
+
+    protected function assertModel(Authenticatable $user): Model
+    {
+        if (! $user instanceof Model) {
+            throw new \InvalidArgumentException('The redeemer must be an Eloquent Model instance.');
+        }
+
+        return $user;
     }
 }
