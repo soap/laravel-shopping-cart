@@ -357,7 +357,7 @@ class ShoppingCart
 
     public function shippingFloat()
     {
-        return $this->shipping;
+        return $this->shipping ?? 0.0;
     }
 
     public function shipping($decimals = null, $decimalPoint = null, $thousandSeperator = null)
@@ -517,7 +517,7 @@ class ShoppingCart
      */
     public function totalLevelDiscountFloat(): float
     {
-        return $this->discounts->totalLevelDiscount;
+        return $this->discounts->totalLevelDiscount ?? 0.0;
     }
 
     public function totalLevelDiscount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
