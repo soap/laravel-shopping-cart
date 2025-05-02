@@ -58,13 +58,13 @@ class DiscountManager
         foreach ($this->couponManager->appliedCoupons() as $couponData) {
             $coupon = $couponData['coupon'];
             if ($coupon->getAppliesTarget() === 'subtotal') {
-                if ($coupon->getDiscountType() === 'percent') {
+                if ($coupon->getDiscountType() === 'percentage') {
                     $context->percentSubtotalDiscount += $coupon->getDiscountValue();
-                } elseif ($coupon->getDiscountType() === 'substraction') {
+                } elseif ($coupon->getDiscountType() === 'subtraction') {
                     $context->fixedSubtotalDiscount += $coupon->getDiscountValue();
                 }
 
-                $context->appliedCouponCodes[] = $coupon->getCode();
+                $context->appliedCouponCodes['subtotal'][] = $coupon->getCode();
 
                 $context->couponBreakdown[] = [
                     'code' => $coupon->getCode(),
@@ -75,13 +75,13 @@ class DiscountManager
                     'allocated' => 0.0,
                 ];
             } elseif ($coupon->getAppliesTarget() === 'total') {
-                if ($coupon->getDiscountType() === 'percent') {
+                if ($coupon->getDiscountType() === 'percentage') {
                     $context->percentTotalDiscount += $coupon->getDiscountValue();
-                } elseif ($coupon->getDiscountType() === 'substraction') {
+                } elseif ($coupon->getDiscountType() === 'subtraction') {
                     $context->fixedTotalDiscount += $coupon->getDiscountValue();
                 }
 
-                $context->appliedCouponCodes[] = $coupon->getCode();
+                $context->appliedCouponCodes['total'][] = $coupon->getCode();
 
                 $context->couponBreakdown[] = [
                     'code' => $coupon->getCode(),
