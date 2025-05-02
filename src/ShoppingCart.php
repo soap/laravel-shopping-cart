@@ -85,6 +85,8 @@ class ShoppingCart
      */
     protected ?string $guard = null;
 
+    protected $dirty = true;
+
     /**
      * ShoppingCart constructor.
      */
@@ -208,7 +210,7 @@ class ShoppingCart
             $this->events->dispatch('cart.added', $item);
         }
 
-        $this->calculate();
+        $this->handleCartChanged();
 
         return $item;
     }
@@ -265,7 +267,7 @@ class ShoppingCart
 
         $this->events->dispatch('cart.updated', $cartItem);
 
-        $this->calculate();
+        $this->handleCartChanged();
 
         return $cartItem;
     }
@@ -290,7 +292,7 @@ class ShoppingCart
 
         $this->events->dispatch('cart.removed', $cartItem);
 
-        $this->calculate();
+        $this->handleCartChanged();
     }
 
     /**
@@ -775,7 +777,7 @@ class ShoppingCart
         $this->updatedAt = Carbon::parse(data_get($stored, 'updated_at'));
 
         $this->getConnection()->table($this->getTableName())->where(['identifier' => $identifier, 'instance' => $currentInstance])->delete();
-        $this->calculate();
+        $this->handleCartChanged();
     }
 
     /**
@@ -830,7 +832,7 @@ class ShoppingCart
         }
 
         $this->events->dispatch('cart.merged');
-        $this->calculate();
+        $this->handleCartChanged();
 
         return true;
     }
@@ -884,7 +886,7 @@ class ShoppingCart
             $guard = $this->guard;
         }
         $this->discountManager->applyCoupon($couponCode, $userId, $guard);
-        $this->calculate();
+        $this->handleCartChanged();
 
         return true;
     }
@@ -908,7 +910,7 @@ class ShoppingCart
         return new Collection;
     }
 
-    protected function calculate()
+    protected function handleCartChanged()
     {
         $this->discountManager->calculateDiscounts();
         $calculator = new CartCalculator;
