@@ -65,7 +65,7 @@ class ShoppingCart
      *
      * @var float
      */
-    private $discount = 0;
+    private $discountRate = 0;
 
     private $shipping = 0;
 
@@ -131,7 +131,7 @@ class ShoppingCart
         $instance = $instance ?: self::DEFAULT_INSTANCE;
 
         if ($instance instanceof InstanceIdentifierInterface) {
-            $this->discount = $instance->getInstanceGlobalDiscount();
+            $this->discountRate = $instance->getInstanceGlobalDiscount();
             $instance = $instance->getInstanceIdentifier();
         }
 
@@ -185,7 +185,7 @@ class ShoppingCart
     public function addCartItem($item, $keepDiscount = false, $keepTax = false, $dispatchEvent = true)
     {
         if (! $keepDiscount) {
-            $item->setDiscountRate($this->discount);
+            $item->setDiscountRate($this->discountRate);
         }
 
         if (! $keepTax) {
@@ -682,15 +682,15 @@ class ShoppingCart
      * @param  float  $discount
      * @return void
      */
-    public function setGlobalDiscount($discount)
+    public function setGlobalDiscount($discountRate)
     {
-        $this->discount = $discount;
+        $this->discountRate = $discountRate;
 
         $content = $this->getContent();
 
         if ($content->count()) {
             $content->each(function ($item, $key) {
-                $item->setDiscountRate($this->discount);
+                $item->setDiscountRate($this->discountRate);
             });
         }
     }
@@ -875,6 +875,11 @@ class ShoppingCart
         return $this->discountManager->getAppliedCoupons();
     }
 
+    public function appliedCoupons(): array
+    {
+        return $this->discountManager->getAppliedCoupons();
+    }
+
     public function verifyCoupon(string $couponCode, int|string|null $userId = null, ?string $guard = null): bool
     {
         return $this->discountManager->verifyCoupon($couponCode, $userId, $guard);
@@ -891,9 +896,9 @@ class ShoppingCart
         return true;
     }
 
-    public function appliedCoupons(): array
+    public function getCouponBreakdown(): array
     {
-        return $this->discountManager->coupons()->appliedCoupons();
+        return $this->discounts->couponBreakdown ?? [];
     }
 
     /**
