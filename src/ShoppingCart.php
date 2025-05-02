@@ -510,6 +510,15 @@ class ShoppingCart
         return $this->numberFormat($this->finalPayableFloat(), $decimals, $decimalPoint, $thousandSeperator);
     }
 
+    public function subtotalLevelDiscountFloat(): float
+    {
+        return $this->discounts->subtotalLevelDiscount ?? 0.0;
+    }
+
+    public function subtotalLevelDiscount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    {
+        return $this->numberFormat($this->subtotalLevelDiscountFloat(), $decimals, $decimalPoint, $thousandSeperator);
+    }
     /**
      * Get the total level discount of the cart.
      *
@@ -523,6 +532,16 @@ class ShoppingCart
     public function totalLevelDiscount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
     {
         return $this->numberFormat($this->totalLevelDiscountFloat(), $decimals, $decimalPoint, $thousandSeperator);
+    }
+
+    public function discountFloat()
+    {
+        return $this->subtotalLevelDiscountFloat() + $this->totalLevelDiscountFloat();
+    }
+
+    public function discount($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    {
+        return $this->numberFormat($this->discountFloat(), $decimals, $decimalPoint, $thousandSeperator);
     }
 
     /**
@@ -831,6 +850,8 @@ class ShoppingCart
             case 'total':
             case 'finalPayable':
                 return $this->finalPayable();
+            case 'discount':
+                return $this->discount();
             case 'tax':
                 return $this->tax();
             case 'subtotal':
