@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shopping-cart` will be documented in this file.
 
+## v2.0.6 - 2025-05-02
+
+### What's Changed
+
+* Fixed typo in pipeline caused calculation is incorrect by @soap in https://github.com/soap/laravel-shopping-cart/pull/7
+
+**Full Changelog**: https://github.com/soap/laravel-shopping-cart/compare/v2.0.5...v2.0.6
+
 ## v2.0.5 - 2025-05-02
 
 ### What's Changed
