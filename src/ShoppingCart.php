@@ -265,6 +265,8 @@ class ShoppingCart
 
         $this->events->dispatch('cart.updated', $cartItem);
 
+        $this->calculate();
+
         return $cartItem;
     }
 
@@ -287,6 +289,8 @@ class ShoppingCart
         $this->session->put($this->instance, $content);
 
         $this->events->dispatch('cart.removed', $cartItem);
+
+        $this->calculate();
     }
 
     /**
@@ -825,10 +829,12 @@ class ShoppingCart
     {
         switch ($attribute) {
             case 'total':
+            case 'finalPayable':
                 return $this->finalPayable();
             case 'tax':
                 return $this->tax();
             case 'subtotal':
+            case 'finalSubtotal':
                 return $this->finalSubtotal();
             default:
                 return null;
