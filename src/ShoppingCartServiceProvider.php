@@ -6,7 +6,9 @@ use Illuminate\Auth\Events\Logout;
 use Illuminate\Session\SessionManager;
 use Soap\ShoppingCart\Commands\ShoppingCartCommand;
 use Soap\ShoppingCart\Contracts\CouponServiceInterface;
+use Soap\ShoppingCart\Contracts\UserResolverInterface;
 use Soap\ShoppingCart\Services\CouponService;
+use Soap\ShoppingCart\Supports\UserResolver;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -32,10 +34,15 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
             return new ShoppingCart($app->make('session'), $app->make('events'));
         });
 
-        $this->app->bind(CouponServiceInterface::class, CouponService::class);
+        $this->app->singleton(CouponServiceInterface::class, CouponService::class);
+
+        $this->app->singleton(UserResolverInterface::class, UserResolver::class);
 
         $this->app->singleton(CouponManager::class, function ($app) {
-            return new CouponManager;
+            return new CouponManager(
+                $app->make(UserResolverInterface::class),
+                $app->make(CouponServiceInterface::class)
+            );
         });
 
         $this->app->singleton(ConditionManager::class, function ($app) {

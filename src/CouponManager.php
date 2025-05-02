@@ -2,13 +2,25 @@
 
 namespace Soap\ShoppingCart;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use Soap\ShoppingCart\Contracts\CouponServiceInterface;
+use Soap\ShoppingCart\Contracts\UserResolverInterface;
 use Soap\ShoppingCart\Exceptions\CouponExpiredException;
 use Soap\ShoppingCart\Exceptions\CouponMinimumOrderValueException;
+use Soap\ShoppingCart\Exceptions\CouponNotAllowedToRedeemException;
 use Soap\ShoppingCart\Exceptions\CouponNotFoundException;
+use Soap\ShoppingCart\Exceptions\CouponOverLimitException;
+use Soap\ShoppingCart\Exceptions\CouponOverQuantityException;
 
 class CouponManager
 {
+    /**
+     * The user object.
+     * This is used to apply coupons to the user.
+     */
+    protected ?Authenticatable $user = null;
+
     /**
      * Array that will hold each coupon data
      * indexed by coupon code.
@@ -16,18 +28,24 @@ class CouponManager
     protected array $coupons = [];
 
     /**
-     * The service that retrieves coupon data.
-     */
-    protected CouponServiceInterface $couponService;
-
-    /**
      * Construct the Coupon Manager.
      * The CouponServiceInterface is resolved from the Laravel container.
      */
-    public function __construct()
+    public function __construct(protected UserResolverInterface $userResolver, protected CouponServiceInterface $couponService)
     {
-        $this->couponService = app(CouponServiceInterface::class);
         $this->populateCoupons();
+    }
+
+    public function resolveUser(int|string|null $userId = null, ?string $guard = null): self
+    {
+        $this->user = $this->userResolver->resolve($userId, $guard);
+
+        return $this;
+    }
+
+    public function getUser(): ?Authenticatable
+    {
+        return $this->user;
     }
 
     public function add(string $couponCode)
@@ -77,14 +95,16 @@ class CouponManager
 
     public function apply(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null, ?string $guard = null): self
     {
-        $coupon = $this->get($couponCode);
+        $this->verify($couponCode, $cart, $userId, $guard);
 
-        if (! $coupon) {
-            throw new \Exception("Coupon not found: {$couponCode}");
+        $this->user = $this->userResolver->resolve($userId, $guard);
+
+        if (! $this->user) {
+            throw new \Exception('No authenticated user found to apply coupon.');
         }
 
         // Apply the coupon to the cart.
-        $appliedCoupon = $this->couponService->applyCoupon($couponCode, $cart->finalSubtotal(), $userId, $guard);
+        $appliedCoupon = $this->couponService->applyCoupon($couponCode, $cart->finalSubtotal(), $this->user);
 
         if (! $appliedCoupon) {
             throw new \Exception("Failed to apply coupon: {$couponCode}");
@@ -98,18 +118,42 @@ class CouponManager
 
     public function verify(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null, ?string $guard = null): bool
     {
+        $this->user = $this->userResolver->resolve($userId, $guard);
+
+        if (! $this->user) {
+            throw new \Exception('No authenticated user found to apply coupon.');
+        }
+
         $coupon = $this->couponService->getCouponByCode($couponCode);
 
         if (! $coupon) {
             throw new CouponNotFoundException("Coupon not found: {$couponCode}");
         }
 
+        if ($coupon->isDisabled()) {
+            throw new \Exception("Coupon is disabled: {$couponCode}");
+        }
+
         if ($coupon->isExpired()) {
             throw new CouponExpiredException("Coupon expired: {$couponCode}");
         }
 
-        if ($coupon->getMinOrderValue() !== null && $cart->finalSubtotalFloat() < $coupon->getMinOrderValue()) {
+        if ($coupon->isOverQuantity()) {
+            throw new CouponOverQuantityException("Coupon quantity exceeded: {$couponCode}");
+        }
+
+        if ($coupon->getMinOrderValue() !== null && $cart->initialSubtotalFloat() < $coupon->getMinOrderValue()) {
             throw new CouponMinimumOrderValueException("Coupon minimum order value not met: {$couponCode}");
+        }
+
+        if ($this->user instanceof Model) {
+            if (! $coupon->isAllowedToRedeemBy($this->user)) {
+                throw new CouponNotAllowedToRedeemException("Coupon not allowed to redeem: {$couponCode}");
+            }
+
+            if ($coupon->isOverLimitFor($this->user)) {
+                throw new CouponOverLimitException("Coupon over limit for user: {$couponCode}");
+            }
         }
 
         return true;

@@ -10,7 +10,7 @@ class CustomCartItemCalculator implements CalculatorInterface
     {
         $price = $item->price;
         $qty = $item->qty;
-        $rate = $item->discountRate ?? 0;
+        $rate = ($item->discountRate ?? 0) / 100.0;
         $fixed = $item->discountAmount ?? 0;
         $applied = $item->appliedSubtotalDiscount ?? 0;
 
@@ -29,6 +29,7 @@ class CustomCartItemCalculator implements CalculatorInterface
             'subtotalLevelDiscountTotal' => $applied,
 
             'totalDiscount' => self::getAttribute('itemLevelDiscountTotal', $item) + $applied,
+            'discount' => self::getAttribute('totalDiscount', $item),
 
             'finalSubtotal' => self::getAttribute('subtotalAfterItemDiscount', $item) - $applied,
             'subtotal' => self::getAttribute('finalSubtotal', $item), // backward compatibility

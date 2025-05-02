@@ -3,6 +3,7 @@
 namespace Soap\ShoppingCart\Adaptors;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use MichaelRubel\Couponables\Models\Contracts\CouponContract;
 use Soap\ShoppingCart\Contracts\CouponInterface as ExternalCoupon;
 
@@ -48,6 +49,26 @@ class CouponAdapter implements ExternalCoupon
     public function isExpired(): bool
     {
         return $this->coupon->isExpired();
+    }
+
+    public function isDisabled(): bool
+    {
+        return $this->coupon->isDisabled();
+    }
+
+    public function isOverQuantity(): bool
+    {
+        return $this->coupon->isOverQuantity();
+    }
+
+    public function isAllowedToRedeemBy(Model $user): bool
+    {
+        return $this->coupon->isAllowedToRedeemBy($user);
+    }
+
+    public function isOverLimitFor(Model $user): bool
+    {
+        return $this->coupon->isOverLimit($user);
     }
 
     /**

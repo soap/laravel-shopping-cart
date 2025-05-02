@@ -219,7 +219,7 @@ class CartItem implements Arrayable, Jsonable
 
     /**
      * Returns the formatted total.
-     * Total is price for whole CartItem with TAX.
+     * Total is price for whole CartItem with TAX and discount.
      *
      * @param  int  $decimals
      * @param  string  $decimalPoint
@@ -228,7 +228,7 @@ class CartItem implements Arrayable, Jsonable
      */
     public function total($decimals = null, $decimalPoint = null, $thousandSeperator = null)
     {
-        return $this->numberFormat($this->total, $decimals, $decimalPoint, $thousandSeperator);
+        return $this->numberFormat($this->finalSubtotal, $decimals, $decimalPoint, $thousandSeperator);
     }
 
     /**

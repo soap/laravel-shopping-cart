@@ -3,6 +3,7 @@
 namespace Soap\ShoppingCart\Contracts;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 
 interface CouponInterface
 {
@@ -45,6 +46,14 @@ interface CouponInterface
      * Returns true if the coupon is expired, false otherwise.
      */
     public function isExpired(): bool;
+
+    public function isDisabled(): bool;
+
+    public function isOverQuantity(): bool;
+
+    public function isAllowedToRedeemBy(Model $user): bool;
+
+    public function isOverLimitFor(Model $user): bool;
 
     /**
      * Get minumum order value for the coupon to be valid.
