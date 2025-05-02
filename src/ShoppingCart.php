@@ -61,7 +61,7 @@ class ShoppingCart
     private $updatedAt;
 
     /**
-     * Defines the discount percentage.
+     * Defines the discount percentage for all items.
      *
      * @var float
      */

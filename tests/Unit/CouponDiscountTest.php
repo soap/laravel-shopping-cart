@@ -45,8 +45,8 @@ it('can calculate correctly for subtotal discount only', function () {
     $itemB = $result->items[1];
 
     // Subtotals before any discounts
-    expect($itemA->originalSubtotal)->toBe(200.00);
-    expect($itemB->originalSubtotal)->toBe(200.00);
+    expect($itemA->initialSubtotal)->toBe(200.00);
+    expect($itemB->initialSubtotal)->toBe(200.00);
 
     // No item-level discounts
     expect($itemA->subtotalAfterItemDiscount)->toBe(200.00);

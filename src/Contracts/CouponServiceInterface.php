@@ -2,6 +2,8 @@
 
 namespace Soap\ShoppingCart\Contracts;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+
 interface CouponServiceInterface
 {
     public function getCoupons(): array;
@@ -14,5 +16,5 @@ interface CouponServiceInterface
     /**
      * Apply the coupon to the cart.
      */
-    public function applyCoupon(string $couponCode, $orderAmount = 0, int|string|null $userId = null, ?string $guard = null): ?CouponInterface;
+    public function applyCoupon(string $couponCode, $orderAmount = 0, ?Authenticatable $user = null): ?CouponInterface;
 }

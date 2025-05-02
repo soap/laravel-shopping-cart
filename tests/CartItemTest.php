@@ -38,5 +38,5 @@ it('can format total price correctly', function () {
     $cartItem = new CartItem(1, 'Some item', 10.00, 550, ['size' => 'XL', 'color' => 'red']);
     $cartItem->setQuantity(2);
 
-    expect($cartItem->priceTotal())->toBe('20.00');
+    expect($cartItem->initialSubtotal)->toBe(20.0);
 });

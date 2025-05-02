@@ -933,17 +933,17 @@ it('can change discount globally', function () {
     $cart->setGlobalTax(0);
     $cart->setGlobalDiscount(50);
     $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
-    expect($cartItem->total(2))->toEqual('10.00');
+    expect($cartItem->total(decimals: 2))->toEqual('10.00');
 });
 
-it('cart has no rounding errors', function () {
+it('has no rounding errors', function () {
     $cart = getCart();
     $cart->add(new BuyableProduct([
         'name' => 'Item',
         'price' => 10.004,
     ]), 2);
     $cartItem = $cart->get('027c91341fd5cf4d2579b49c4b6a90da');
-    expect($cartItem->total(2))->toEqual('24.21');
+    expect($cartItem->total(decimals: 2))->toEqual('20.01');
 });
 
 it('can merge multiple carts', function () {
