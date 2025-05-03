@@ -55,8 +55,7 @@ class DiscountManager
         $context->appliedCouponCodes = [];
         $context->couponBreakdown = [];
         /** Coupon discount */
-        foreach ($this->couponManager->appliedCoupons() as $couponData) {
-            $coupon = $couponData['coupon'];
+        foreach ($this->couponManager->appliedCoupons() as $coupon) {
             if ($coupon->getAppliesTarget() === 'subtotal') {
                 if ($coupon->getDiscountType() === 'percentage') {
                     $context->percentSubtotalDiscount += $coupon->getDiscountValue();

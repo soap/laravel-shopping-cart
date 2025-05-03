@@ -25,6 +25,7 @@ dataset('couponCases', [
             ],
             'expectedSubtotal' => 900.0,
             'expectedTotal' => 900.0, // 10% ของ 1000
+            'expectedDiscount' => 100.0,
             'expected' => [
                 'level' => 'subtotal',
                 'type' => 'percentage',
@@ -51,6 +52,7 @@ dataset('couponCases', [
             ],
             'expectedSubtotal' => 950.0,
             'expectedTotal' => 950.0,
+            'expectedDiscount' => 50.0,
             'expected' => [
                 'level' => 'subtotal',
                 'type' => 'subtraction',
@@ -77,6 +79,7 @@ dataset('couponCases', [
             ],
             'expectedSubtotal' => 1000.0,
             'expectedTotal' => 950.0, // 5% ของ 1000
+            'expectedDiscount' => 50.0,
             'expected' => [
                 'level' => 'total',
                 'type' => 'percentage',
@@ -103,6 +106,7 @@ dataset('couponCases', [
             ],
             'expectedSubtotal' => 1000.0,
             'expectedTotal' => 900.0,
+            'expectedDiscount' => 100.0,
             'expected' => [
                 'level' => 'total',
                 'type' => 'subtraction',
@@ -147,4 +151,5 @@ it('applies coupon correctly and tracks coupon breakdown', function ($data) {
     expect($cart->initialSubtotalFloat())->toEqual(1000.0);
     expect($cart->finalSubtotalFloat())->toEqual($data['expectedSubtotal']);
     expect($cart->finalPayableFloat())->toEqual($data['expectedTotal']);
+    expect($cart->discountFloat())->toEqual($data['expectedDiscount']);
 })->with('couponCases');
