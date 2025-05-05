@@ -20,7 +20,7 @@ it('applies fixed total-level discount correctly', function () {
     // Coupon ต้องสร้างก่อน ShoppingCart เพราะ CouponManager จะโหลดข้อมูล Coupon จาก DB
     $coupon = Coupon::factory()->create([
         'code' => 'TOTAL150',
-        'type' => 'substraction',
+        'type' => 'subtraction',
         'value' => 150,
         'limit' => 1,
         'quantity' => 1,
@@ -62,7 +62,7 @@ it('applies percent total-level discount correctly', function () {
     // Coupon ต้องสร้างก่อน ShoppingCart เพราะ CouponManager จะโหลดข้อมูล Coupon จาก DB
     $coupon = Coupon::factory()->create([
         'code' => 'TOTAL10p',
-        'type' => 'percent',
+        'type' => 'percentage',
         'value' => 10,
         'limit' => 1,
         'quantity' => 1,

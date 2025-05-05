@@ -377,7 +377,7 @@ class ShoppingCart
     public function taxFloat()
     {
         return $this->getContent()->reduce(function ($tax, CartItem $item) {
-            return $tax + $item->tax;
+            return $tax + $item->taxTotal; // taxTotal = tax * qty
         }, 0.0);
     }
 
@@ -404,7 +404,7 @@ class ShoppingCart
     public function initialSubtotalFloat()
     {
         return $this->getContent()->reduce(function ($initial, CartItem $cartItem) {
-            return $initial + ($cartItem->qty * $cartItem->price);
+            return $initial + ($cartItem->qty * $cartItem->price); // priceTotal = price * qty
         }, 0);
     }
 
@@ -455,11 +455,7 @@ class ShoppingCart
     public function finalSubtotalFloat(): float
     {
         return $this->getContent()->reduce(function ($subtotal, CartItem $item) {
-            return $subtotal + (
-                ($item->price * $item->qty)
-                - ($item->appliedItemDiscount ?? 0)
-                - ($item->appliedSubtotalDiscount ?? 0)
-            );
+            return $subtotal + $item->finalSubtotal; // finalSubtotal = subtotalAfterItemDiscount - subtotalLevelDiscount
         }, 0);
     }
 
@@ -467,6 +463,11 @@ class ShoppingCart
      * @since 2.0.0
      */
     public function finalSubtotal($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    {
+        return $this->numberFormat($this->finalSubtotalFloat(), $decimals, $decimalPoint, $thousandSeperator);
+    }
+
+    public function subtotal($decimals = null, $decimalPoint = null, $thousandSeperator = null)
     {
         return $this->numberFormat($this->finalSubtotalFloat(), $decimals, $decimalPoint, $thousandSeperator);
     }
@@ -508,6 +509,11 @@ class ShoppingCart
      * @since 2.0.0
      */
     public function finalPayable($decimals = null, $decimalPoint = null, $thousandSeperator = null)
+    {
+        return $this->numberFormat($this->finalPayableFloat(), $decimals, $decimalPoint, $thousandSeperator);
+    }
+
+    public function total($decimals = null, $decimalPoint = null, $thousandSeperator = null)
     {
         return $this->numberFormat($this->finalPayableFloat(), $decimals, $decimalPoint, $thousandSeperator);
     }
@@ -623,6 +629,8 @@ class ShoppingCart
 
         $content->put($cartItem->rowId, $cartItem);
 
+        $this->handleCartChanged();
+
         $this->session->put($this->instance, $content);
     }
 
@@ -647,7 +655,10 @@ class ShoppingCart
             $content->each(function ($item, $key) {
                 $item->setTaxRate($this->taxRate);
             });
+
         }
+        $this->handleCartChanged();
+
     }
 
     public function setGlobalTaxRate($taxRate)
@@ -672,6 +683,8 @@ class ShoppingCart
 
         $content->put($cartItem->rowId, $cartItem);
 
+        $this->handleCartChanged();
+
         $this->session->put($this->instance, $content);
     }
 
@@ -679,7 +692,7 @@ class ShoppingCart
      * Set the global discount percentage for the cart.
      * This will set the discount for all cart items.
      *
-     * @param  float  $discount
+     * @param  float  $discountRate
      * @return void
      */
     public function setGlobalDiscount($discountRate)
@@ -693,6 +706,8 @@ class ShoppingCart
                 $item->setDiscountRate($this->discountRate);
             });
         }
+
+        $this->handleCartChanged();
     }
 
     /**
@@ -832,7 +847,6 @@ class ShoppingCart
         }
 
         $this->events->dispatch('cart.merged');
-        $this->handleCartChanged();
 
         return true;
     }
@@ -841,9 +855,7 @@ class ShoppingCart
      * Magic method to make accessing the total, tax and subtotal properties possible.
      *
      * @internal provide backwards compatibility with version 1.x
-     *
-     * @deprecated since version 3.0.0
-     *
+     *    *
      * @param  string  $attribute
      * @return float|null|string
      */
@@ -851,14 +863,12 @@ class ShoppingCart
     {
         switch ($attribute) {
             case 'total':
-            case 'finalPayable':
                 return $this->finalPayable();
             case 'discount':
                 return $this->discount();
             case 'tax':
                 return $this->tax();
             case 'subtotal':
-            case 'finalSubtotal':
                 return $this->finalSubtotal();
             default:
                 return null;

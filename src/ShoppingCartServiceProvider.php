@@ -40,6 +40,8 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(CouponManager::class, function ($app) {
             return new CouponManager(
+                $app->make('session'),
+                $app->make('events'),
                 $app->make(UserResolverInterface::class),
                 $app->make(CouponServiceInterface::class)
             );

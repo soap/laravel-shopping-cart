@@ -3,8 +3,14 @@
 namespace Soap\ShoppingCart;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Session\SessionManager;
+use Soap\ShoppingCart\Adaptors\CouponDTO;
+use Soap\ShoppingCart\Adaptors\CouponFactory;
+use Soap\ShoppingCart\Contracts\CouponInterface;
 use Soap\ShoppingCart\Contracts\CouponServiceInterface;
+use Soap\ShoppingCart\Contracts\InstanceIdentifierInterface;
 use Soap\ShoppingCart\Contracts\UserResolverInterface;
 use Soap\ShoppingCart\Exceptions\CouponExpiredException;
 use Soap\ShoppingCart\Exceptions\CouponMinimumOrderValueException;
@@ -15,6 +21,8 @@ use Soap\ShoppingCart\Exceptions\CouponOverQuantityException;
 
 class CouponManager
 {
+    const DEFAULT_INSTANCE = 'default';
+
     /**
      * The user object.
      * This is used to apply coupons to the user.
@@ -27,13 +35,42 @@ class CouponManager
      */
     protected array $coupons = [];
 
+    private $instance;
+
     /**
      * Construct the Coupon Manager.
      * The CouponServiceInterface is resolved from the Laravel container.
      */
-    public function __construct(protected UserResolverInterface $userResolver, protected CouponServiceInterface $couponService)
+    public function __construct(
+        protected SessionManager $session,
+        protected Dispatcher $events,
+        protected UserResolverInterface $userResolver,
+        protected CouponServiceInterface $couponService)
     {
-        $this->populateCoupons();
+        $this->instance(self::DEFAULT_INSTANCE);
+    }
+
+    public function instance($instance = null): self
+    {
+        $instance = $instance ?: self::DEFAULT_INSTANCE;
+
+        if ($instance instanceof InstanceIdentifierInterface) {
+            $instance = $instance->getInstanceIdentifier();
+        }
+
+        $this->instance = 'coupons.'.$instance;
+
+        return $this;
+    }
+
+    /**
+     * Get the current coupon instance without the prefix.
+     *
+     * @return string
+     */
+    public function currentInstance()
+    {
+        return str_replace('coupons.', '', $this->instance);
     }
 
     public function resolveUser(int|string|null $userId = null, ?string $guard = null): self
@@ -48,26 +85,75 @@ class CouponManager
         return $this->user;
     }
 
-    public function add(string $couponCode)
+    public function add(string $couponCode): static
     {
+        if ($this->has($couponCode)) {
+            return $this;
+        }
+
         $coupon = $this->couponService->getCouponByCode($couponCode);
 
         if (! $coupon) {
             throw new \Exception("Coupon not found: {$couponCode}");
         }
 
+        return $this->addFromAdapter($coupon);
+    }
+
+    public function has(string $couponCode): bool
+    {
+        return isset($this->coupons[$couponCode]);
+    }
+
+    public function addFromAdapter(CouponInterface $couponAdater): static
+    {
+        $code = $couponAdater->getCode();
+
         // Prevent duplicate coupon addition.
-        if (isset($this->coupons[$couponCode])) {
-            throw new \Exception("Coupon already added: {$couponCode}");
+        if ($this->has($code)) {
+            throw new \Exception("Coupon already added: {$code}");
         }
 
+        $dto = CouponDTO::fromAdapter($couponAdater);
+
         // Store coupon data:
-        $this->coupons[$couponCode] = [
-            'coupon' => $coupon, // the coupon object from the service
-            'applies_target' => $coupon->getAppliesTarget() ?? 'subtotal', // default to subtotal if not specified
+        $this->coupons[$code] = [
+            'coupon' => $dto->toArray(),
+            'applies_target' => $dto->applies_target ?? 'subtotal', // default to subtotal if not specified
             'applied' => false, // not applied yet
             'discount' => 0,    // discount to be calculated later
         ];
+
+        // Store the coupons in the session.
+        $this->session->put($this->instance, $this->coupons);
+
+        return $this;
+    }
+
+    public function markAsApplied(string $couponCode, float $discount = 0): static
+    {
+        if (! isset($this->coupons[$couponCode])) {
+            throw new \Exception("Coupon not found: {$couponCode}");
+        }
+
+        $this->coupons[$couponCode]['applied'] = true;
+        $this->coupons[$couponCode]['discount'] = $discount;
+
+        $this->session->put($this->instance, $this->coupons);
+
+        return $this;
+    }
+
+    public function markAsUnapplied(string $couponCode): static
+    {
+        if (! isset($this->coupons[$couponCode])) {
+            throw new \Exception("Coupon not found: {$couponCode}");
+        }
+
+        $this->coupons[$couponCode]['applied'] = false;
+        $this->coupons[$couponCode]['discount'] = 0;
+
+        $this->session->put($this->instance, $this->coupons);
 
         return $this;
     }
@@ -80,17 +166,61 @@ class CouponManager
 
         unset($this->coupons[$couponCode]);
 
+        $this->session->put($this->instance, $this->coupons);
+
         return $this;
     }
 
     public function get(string $couponCode): ?array
     {
-        return $this->coupons[$couponCode] ?? null;
+        if (! isset($this->coupons[$couponCode])) {
+            return null;
+        }
+
+        $data = $this->coupons[$couponCode];
+
+        return [
+            'coupon' => CouponFactory::fromDTO(new CouponDTO(...$data['coupon'])),
+            'applies_to' => $data['applies_target'],
+            'discount' => $data['discount'],
+            'applied' => $data['applied'],
+        ];
     }
 
     public function all(): array
     {
         return $this->coupons;
+    }
+
+    public function allWithAdapters(): array
+    {
+        return collect($this->coupons)
+            ->map(fn ($data) => [
+                'coupon' => CouponFactory::fromDTO(new CouponDTO(...$data['coupon'])),
+                'applies_to' => $data['applies_target'],
+                'discount' => $data['discount'],
+                'applied' => $data['applied'],
+            ])
+            ->all();
+    }
+
+    public function resolvedCoupons(bool $appliedOnly = false): array
+    {
+        return collect($this->coupons)
+            ->filter(function ($data) use ($appliedOnly) {
+                return ! $appliedOnly || ($data['applied'] ?? false);
+            })
+            ->map(function ($data, $code) {
+                return [
+                    'code' => $code,
+                    'coupon' => CouponFactory::fromDTO(new CouponDTO(...$data['coupon'])),
+                    'applies_to' => $data['applies_target'],
+                    'discount' => $data['discount'],
+                    'applied' => $data['applied'],
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     public function apply(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null, ?string $guard = null): self
@@ -112,6 +242,7 @@ class CouponManager
 
         // Mark the coupon as applied.
         $this->coupons[$appliedCoupon->getCode()]['applied'] = true;
+        $this->session->put($this->instance, $this->coupons);
 
         return $this;
     }
@@ -124,7 +255,15 @@ class CouponManager
             throw new \Exception('No authenticated user found to apply coupon.');
         }
 
-        $coupon = $this->couponService->getCouponByCode($couponCode);
+        if (! $this->has($couponCode)) {
+            $coupon = $this->couponService->getCouponByCode($couponCode);
+            if (! $coupon) {
+                throw new \Exception("Coupon not found: {$couponCode}");
+            }
+            $this->addFromAdapter($coupon);
+        }
+
+        $coupon = $this->get($couponCode)['coupon']; // Get the coupon adapter
 
         if (! $coupon) {
             throw new CouponNotFoundException("Coupon not found: {$couponCode}");
@@ -165,9 +304,10 @@ class CouponManager
     public function appliedCoupons(): array
     {
         return collect($this->coupons)
-            ->filter(function (array $coupon) {
-                return $coupon['applied'] ?? false;
-            })->toArray();
+            ->filter(fn ($c) => $c['applied'] === true)
+            ->map(fn ($c) => CouponFactory::fromDTO(new CouponDTO(...$c['coupon'])))
+            ->values()
+            ->all();
     }
 
     /**
@@ -210,7 +350,7 @@ class CouponManager
     protected function populateCoupons(): void
     {
         foreach ($this->couponService->getCoupons() as $coupon) {
-            $this->add($coupon->getCode());
+            $this->addFromAdapter($coupon);
         }
     }
 }

@@ -19,3 +19,11 @@ it('returns the same instance from the container and the facade', function () {
 
     expect($facadeCart)->toBe($containerCart);
 });
+
+it('shares the same cart state between facade and app', function () {
+    ShoppingCartFacade::add('product_123', 'Product ABC', 1, 99);
+
+    $cart = app('shopping-cart');
+    expect($cart->content()->count())->toBe(1);
+    expect($cart->content()->first()->id)->toBe('product_123');
+});
