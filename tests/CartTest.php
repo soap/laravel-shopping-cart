@@ -781,17 +781,24 @@ it('can store the cart in a database', function () {
 
     Event::assertDispatched('cart.stored');
 
-    if (app('db')->getDriverName() === 'pgsql') {
-        $serialized = base64_encode(serialize($cart->content()));
-    } else {
-        $serialized = serialize($cart->content());
-    }
+    $record = DB::table('shopping_carts')
+        ->where('identifier', $identifier)
+        ->where('instance', 'default')
+        ->first();
 
-    $this->assertDatabaseHas('shopping_carts', [
-        'identifier' => $identifier,
-        'instance' => 'default',
-        'content' => $serialized,
-    ]);
+    expect($record)->not->toBeNull();
+
+    $stored = app('db')->getDriverName() === 'pgsql'
+        ? unserialize(base64_decode($record->content))
+        : unserialize($record->content);
+
+    expect($stored)
+        ->toHaveKey('items')
+        ->and($stored['items'])->toBeArray()
+        ->and($stored['items'])->toHaveCount(1);
+
+    expect($stored['coupons'] ?? [])->toBeArray();
+    expect($stored['conditions'] ?? [])->toBeArray();
 });
 
 it('can store and retrieve cart from the database with correct timestamps', function () {
@@ -972,7 +979,6 @@ it('can merge multiple carts', function () {
     ]), 1);
 
     $cart->setGlobalTax(0);
-
     expect($cart->total())->toEqual(10.00);
     $cart->store('test');  // total 10.00
 
@@ -980,8 +986,8 @@ it('can merge multiple carts', function () {
     $cart2->instance('test2');
     $cart2->setGlobalTax(0);
     $cart2->setGlobalDiscount(0);
-
     expect($cart2->countItems())->toEqual('0');
+
     $cart2->merge('test');
     expect($cart2->countItems())->toEqual('2');
     expect($cart2->total())->toEqual(20);

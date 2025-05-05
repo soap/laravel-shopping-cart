@@ -223,6 +223,22 @@ class CouponManager
             ->all();
     }
 
+    /**
+     * Restore coupons from a snapshot (database).
+     */
+    public function restoreFromSnapshot(array $coupons): void
+    {
+        foreach ($coupons as $data) {
+            $coupon = CouponFactory::fromDTO($data['coupon']);
+
+            $this->addFromAdapter($coupon);
+
+            if (! empty($data['applied'])) {
+                $this->markAsApplied($coupon->getCode(), $data['discount'] ?? 0);
+            }
+        }
+    }
+
     public function apply(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null, ?string $guard = null): self
     {
         $this->verify($couponCode, $cart, $userId, $guard);
