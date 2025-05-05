@@ -17,10 +17,9 @@ it('applies fixed subtotal level discount correctly', function () {
     actingAs($user);
 
     // Create a coupon ลดท้ายบิล 150 บาท
-    // Coupon ต้องสร้างก่อน ShoppingCart เพราะ CouponManager จะโหลดข้อมูล Coupon จาก DB
     $coupon = Coupon::factory()->create([
         'code' => 'SUBTOTAL150',
-        'type' => 'substraction',
+        'type' => 'subtraction',
         'value' => 150,
         'limit' => 1,
         'quantity' => 1,
@@ -65,7 +64,7 @@ it('applies percent subtotal level discount correctly', function () {
     // Coupon ต้องสร้างก่อน ShoppingCart เพราะ CouponManager จะโหลดข้อมูล Coupon จาก DB
     $coupon = Coupon::factory()->create([
         'code' => 'SUBTOTAL10p',
-        'type' => 'percent',
+        'type' => 'percentage',
         'value' => 10,
         'limit' => 1,
         'quantity' => 1,

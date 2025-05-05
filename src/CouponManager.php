@@ -47,7 +47,6 @@ class CouponManager
         protected UserResolverInterface $userResolver,
         protected CouponServiceInterface $couponService)
     {
-        $this->populateCoupons(); // available coupons from database
         $this->instance(self::DEFAULT_INSTANCE);
     }
 
@@ -88,6 +87,10 @@ class CouponManager
 
     public function add(string $couponCode): static
     {
+        if ($this->has($couponCode)) {
+            return $this;
+        }
+
         $coupon = $this->couponService->getCouponByCode($couponCode);
 
         if (! $coupon) {
@@ -97,12 +100,17 @@ class CouponManager
         return $this->addFromAdapter($coupon);
     }
 
+    public function has(string $couponCode): bool
+    {
+        return isset($this->coupons[$couponCode]);
+    }
+
     public function addFromAdapter(CouponInterface $couponAdater): static
     {
         $code = $couponAdater->getCode();
 
         // Prevent duplicate coupon addition.
-        if (isset($this->coupons[$code])) {
+        if ($this->has($code)) {
             throw new \Exception("Coupon already added: {$code}");
         }
 
@@ -175,6 +183,7 @@ class CouponManager
             'coupon' => CouponFactory::fromDTO(new CouponDTO(...$data['coupon'])),
             'applies_to' => $data['applies_target'],
             'discount' => $data['discount'],
+            'applied' => $data['applied'],
         ];
     }
 
@@ -246,7 +255,15 @@ class CouponManager
             throw new \Exception('No authenticated user found to apply coupon.');
         }
 
-        $coupon = $this->couponService->getCouponByCode($couponCode);
+        if (! $this->has($couponCode)) {
+            $coupon = $this->couponService->getCouponByCode($couponCode);
+            if (! $coupon) {
+                throw new \Exception("Coupon not found: {$couponCode}");
+            }
+            $this->addFromAdapter($coupon);
+        }
+
+        $coupon = $this->get($couponCode)['coupon']; // Get the coupon adapter
 
         if (! $coupon) {
             throw new CouponNotFoundException("Coupon not found: {$couponCode}");

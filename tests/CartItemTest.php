@@ -16,7 +16,7 @@ it('can be cast to an array', function () {
             'size' => 'XL',
             'color' => 'red',
         ],
-        'tax' => 0,
+        'tax' => 0.0,
         'subtotal' => 20.00,
         'discount' => 0.0,
         'weight' => 550.0,

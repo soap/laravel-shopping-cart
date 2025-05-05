@@ -95,17 +95,20 @@ class CartItem implements Arrayable, Jsonable
      *
      * @var float
      */
-    private $discountRate = 0;
+    public $discountRate = 0;
 
     /**
      * The discount amount (fixed) for cart item
      *
      * @var float
      */
-    private $discountAmount = 0;
+    public $discountAmount = 0;
 
     public $proportionalWeight = 0;
 
+    /**
+     * The discount from subtotal level allocated to this item.
+     */
     public $appliedSubtotalDiscount = 0;
 
     public $subtotalLevelDiscountTotal = 0;
@@ -228,7 +231,7 @@ class CartItem implements Arrayable, Jsonable
      */
     public function total($decimals = null, $decimalPoint = null, $thousandSeperator = null)
     {
-        return $this->numberFormat($this->finalSubtotal, $decimals, $decimalPoint, $thousandSeperator);
+        return $this->numberFormat($this->total, $decimals, $decimalPoint, $thousandSeperator);
     }
 
     /**
@@ -368,6 +371,18 @@ class CartItem implements Arrayable, Jsonable
         return $this;
     }
 
+    public function setDiscountAmount($discountAmount)
+    {
+        $this->discountAmount = $discountAmount;
+
+        return $this;
+    }
+
+    public function getDiscountAmount()
+    {
+        return (float) $this->discountAmount;
+    }
+
     /**
      * Set the discount rate.
      *
@@ -379,6 +394,17 @@ class CartItem implements Arrayable, Jsonable
         $this->discountRate = $discountRate;
 
         return $this;
+    }
+
+    /**
+     * Getter for the raw internal discount rate.
+     * Should be used in calculators.
+     *
+     * @return float
+     */
+    public function getDiscountRate()
+    {
+        return (float) $this->discountRate;
     }
 
     /**
@@ -537,16 +563,5 @@ class CartItem implements Arrayable, Jsonable
         }
 
         return number_format($value, $decimals, $decimalPoint, $thousandSeperator);
-    }
-
-    /**
-     * Getter for the raw internal discount rate.
-     * Should be used in calculators.
-     *
-     * @return float
-     */
-    public function getDiscountRate()
-    {
-        return $this->discountRate;
     }
 }
