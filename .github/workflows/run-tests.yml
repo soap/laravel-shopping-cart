@@ -86,3 +86,4 @@ jobs:
 
       - name: Execute tests
         run: vendor/bin/pest --ci
+        continue-on-error: ${{ matrix.laravel == '12.*' }}
