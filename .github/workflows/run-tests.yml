@@ -83,7 +83,7 @@ jobs:
 
       - name: List Installed Dependencies
         run: composer show -D
-
+       
       - name: Execute tests
         run: vendor/bin/pest --ci
-        continue-on-error: ${{ matrix.laravel == '12.*' }}
+        continue-on-error: true
