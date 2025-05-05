@@ -15,7 +15,6 @@ concurrency:
 
 jobs:
   test:
-    if: ${{ !startsWith(matrix.laravel, '12') }} # ⛔ Skip Laravel 12.*
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     strategy:
@@ -38,6 +37,10 @@ jobs:
         exclude:
           - laravel: 12.*
             php: 8.2
+          - laravel: 12.*
+            php: 8.3
+          - laravel: 12.*
+            php: 8.4
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
