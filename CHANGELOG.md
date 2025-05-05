@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shopping-cart` will be documented in this file.
 
+## v2.0.8 - 2025-05-05
+
+### What's Changed
+
+* Update database actions to include coupons by @soap in https://github.com/soap/laravel-shopping-cart/pull/9
+
+**Full Changelog**: https://github.com/soap/laravel-shopping-cart/compare/v2.0.7...v2.0.8
+
 ## v2.0.7 - 2025-05-05
 
 ### What's Changed
