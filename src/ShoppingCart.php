@@ -718,8 +718,6 @@ class ShoppingCart
      */
     public function store($identifier)
     {
-        $content = $this->getContent();
-
         if ($identifier instanceof InstanceIdentifierInterface) {
             $identifier = $identifier->getInstanceIdentifier();
         }
@@ -730,11 +728,15 @@ class ShoppingCart
             throw new CartAlreadyStoredException("A cart with identifier {$identifier} was already stored.");
         }
 
-        if ($this->getConnection()->getDriverName() === 'pgsql') {
-            $serializedContent = base64_encode(serialize($content));
-        } else {
-            $serializedContent = serialize($content);
-        }
+        $payload = [
+            'items' => $this->getContent()->all(), // CartItem[]
+            'coupons' => $this->discountManager->coupons()->resolvedCoupons(true),
+            'conditions' => [], // $this->discountManager->conditions()->resolveConditions(true),
+        ];
+
+        $serializedContent = $this->getConnection()->getDriverName() === 'pgsql'
+            ? base64_encode(serialize($payload))
+            : serialize($payload);
 
         $this->getConnection()->table($this->getTableName())->insert([
             'identifier' => $identifier,
@@ -768,30 +770,45 @@ class ShoppingCart
         $stored = $this->getConnection()->table($this->getTableName())
             ->where(['identifier' => $identifier, 'instance' => $currentInstance])->first();
 
-        if ($this->getConnection()->getDriverName() === 'pgsql') {
-            $storedContent = unserialize(base64_decode(data_get($stored, 'content')));
-        } else {
-            $storedContent = unserialize(data_get($stored, 'content'));
-        }
+        $storedContent = $this->getConnection()->getDriverName() === 'pgsql'
+            ? unserialize(base64_decode(data_get($stored, 'content')))
+            : unserialize(data_get($stored, 'content'));
 
         $this->instance(data_get($stored, 'instance'));
 
-        $content = $this->getContent();
+        // 🔄 Compatibility: support old format (just an array of items)
+        $items = is_array($storedContent) && array_is_list($storedContent)
+            ? $storedContent
+            : data_get($storedContent, 'items', []);
 
-        foreach ($storedContent as $cartItem) {
+        $coupons = data_get($storedContent, 'coupons', []);
+        $conditions = data_get($storedContent, 'conditions', []);
+
+        // Restore cart items
+        $content = collect();
+
+        foreach ($items as $cartItem) {
             $content->put($cartItem->rowId, $cartItem);
         }
-
-        $this->events->dispatch('cart.restored');
-
         $this->session->put($this->instance, $content);
 
-        $this->instance($currentInstance);
+        // Restore coupons
+        $this->discountManager->coupons()->restoreFromSnapshot($coupons);
+
+        // Restore conditions
+        /* */
+        // $this->discountManager->conditions()->restoreFromSnapshot($conditions);
 
         $this->createdAt = Carbon::parse(data_get($stored, 'created_at'));
         $this->updatedAt = Carbon::parse(data_get($stored, 'updated_at'));
 
-        $this->getConnection()->table($this->getTableName())->where(['identifier' => $identifier, 'instance' => $currentInstance])->delete();
+        $this->getConnection()->table($this->getTableName())
+            ->where(['identifier' => $identifier, 'instance' => $currentInstance])->delete();
+
+        $this->instance($currentInstance);
+
+        $this->events->dispatch('cart.restored');
+
         $this->handleCartChanged();
     }
 
@@ -836,17 +853,45 @@ class ShoppingCart
         $stored = $this->getConnection()->table($this->getTableName())
             ->where(['identifier' => $identifier, 'instance' => $instance])->first();
 
-        if ($this->getConnection()->getDriverName() === 'pgsql') {
-            $storedContent = unserialize(base64_decode($stored->content));
-        } else {
-            $storedContent = unserialize($stored->content);
-        }
+        $storedContent = $this->getConnection()->getDriverName() === 'pgsql'
+            ? unserialize(base64_decode($stored->content))
+            : unserialize($stored->content);
 
-        foreach ($storedContent as $cartItem) {
+        // ✅ รองรับ format เก่า & ใหม่
+        $items = is_array($storedContent) && array_key_exists('items', $storedContent)
+            ? $storedContent['items']
+            : $storedContent;
+
+        foreach ($items as $cartItem) {
+            if (is_array($cartItem)) {
+                $cartItem = CartItem::fromArray($cartItem);
+            }
+
             $this->addCartItem($cartItem, $keepDiscount, $keepTax, $dispatchAdd);
         }
 
+        // ✅ Restore coupons
+        if (
+            is_array($storedContent)
+            && array_key_exists('coupons', $storedContent)
+            && method_exists($this->discountManager->coupons(), 'restoreFromSnapshot')
+        ) {
+            $this->discountManager->coupons()->restoreFromSnapshot($storedContent['coupons']);
+        }
+
+        // ✅ Restore conditions
+        /*
+        if (
+            is_array($storedContent)
+            && array_key_exists('conditions', $storedContent)
+            && method_exists($this->discountManager->conditions(), 'restoreFromSnapshot')
+        ) {
+            $this->discountManager->conditions()->restoreFromSnapshot($storedContent['conditions']);
+        }
+        */
         $this->events->dispatch('cart.merged');
+
+        $this->handleCartChanged(); // ✅ Recalculate totals, discounts, etc.
 
         return true;
     }

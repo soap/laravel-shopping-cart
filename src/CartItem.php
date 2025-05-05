@@ -476,7 +476,27 @@ class CartItem implements Arrayable, Jsonable
     {
         $options = Arr::get($attributes, 'options', []);
 
-        return new self($attributes['id'], $attributes['name'], $attributes['price'], $attributes['weight'] ?? 0, $options);
+        $item = new self(
+            $attributes['id'],
+            $attributes['name'],
+            $attributes['price'],
+            $attributes['weight'] ?? 0,
+            $options
+        );
+
+        // ✅ เติม field เสริมทั้งหมด
+        $item->setQuantity($attributes['qty'] ?? 1);
+        $item->setDiscountRate($attributes['discountRate'] ?? 0);
+        $item->setDiscountAmount($attributes['discountAmount'] ?? 0);
+        $item->setTaxRate($attributes['taxRate'] ?? 0);
+
+        $item->appliedSubtotalDiscount = $attributes['appliedSubtotalDiscount'] ?? 0;
+        $item->subtotalLevelDiscountTotal = $attributes['subtotalLevelDiscountTotal'] ?? 0;
+        $item->appliedCouponCode = $attributes['appliedCouponCode'] ?? null;
+        $item->proportionalWeight = $attributes['proportionalWeight'] ?? 0;
+        $item->instance = $attributes['instance'] ?? null;
+
+        return $item;
     }
 
     /**
