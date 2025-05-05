@@ -16,21 +16,18 @@ concurrency:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.continue-on-error || false }}
     timeout-minutes: 5
     strategy:
       fail-fast: true
       matrix:
         os: [ubuntu-latest]
         php: [8.4, 8.3]
-        laravel: [12*, 11.*, 10.*]
+        laravel: [12.*, 11.*, 10.*]
         stability: [prefer-stable]
         include:
           - laravel: 12.*
             testbench: 10.*
             carbon: ^3.0
-            stability: prefer-stable
-            continue-on-error: true
           - laravel: 11.*
             testbench: 9.*
             carbon: ^2.63
@@ -40,7 +37,7 @@ jobs:
         exclude:
           - laravel: 12.*
             php: 8.2
-
+            
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
     env:
