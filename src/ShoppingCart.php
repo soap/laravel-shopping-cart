@@ -951,6 +951,14 @@ class ShoppingCart
         return true;
     }
 
+    public function removeCoupon(string $couponCode): bool
+    {
+        $this->discountManager->removeCoupon($couponCode);
+        $this->handleCartChanged();
+
+        return true;
+    }
+
     public function checkout(): bool
     {
         $this->discountManager->checkout();
