@@ -27,7 +27,11 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-shopping-cart')
             ->hasConfigFile()
-            ->hasMigrations(['create_shopping_carts_table', 'create_coupon_reservations_table'])
+            ->hasMigrations([
+                'create_shopping_carts_table', 
+                'create_coupon_reservations_table',
+                'create_cart_conditions_table'
+            ])
             ->hasCommand(ShoppingCartCommand::class);
     }
 
