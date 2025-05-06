@@ -54,6 +54,11 @@ trait HasCouponsSupport
         return $this;
     }
 
+    public function applyCouponUsage(string $code, int|string|null $userId = null, ?string $guard = null): bool
+    {
+        return $this->coupons()->applyUsage($code, $this->cart, $userId, $guard);
+    }
+
     /**
      * Get a coupon by its code.
      *
@@ -78,18 +83,6 @@ trait HasCouponsSupport
     public function getAppliedCoupon(): ?array
     {
         return $this->coupons()->appliedCoupons();
-    }
-
-    /**
-     * Remove an applied coupon from the list of applied coupons.
-     *
-     * @return $this
-     */
-    public function removeAppliedCoupons(): self
-    {
-        $this->coupons()->removeAppliedCoupons();
-
-        return $this;
     }
 
     /**

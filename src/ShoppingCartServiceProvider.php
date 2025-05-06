@@ -5,9 +5,12 @@ namespace Soap\ShoppingCart;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Session\SessionManager;
 use Soap\ShoppingCart\Commands\ShoppingCartCommand;
+use Soap\ShoppingCart\Contracts\CouponReservationStoreInterface;
 use Soap\ShoppingCart\Contracts\CouponServiceInterface;
 use Soap\ShoppingCart\Contracts\UserResolverInterface;
+use Soap\ShoppingCart\ReservationStores\DatabaseCouponReservationStore;
 use Soap\ShoppingCart\Services\CouponService;
+use Soap\ShoppingCart\Supports\ConditionContextFactory;
 use Soap\ShoppingCart\Supports\UserResolver;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -24,7 +27,7 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-shopping-cart')
             ->hasConfigFile()
-            ->hasMigration('create_shopping_carts_table')
+            ->hasMigrations(['create_shopping_carts_table', 'create_coupon_reservations_table'])
             ->hasCommand(ShoppingCartCommand::class);
     }
 
@@ -38,17 +41,36 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(UserResolverInterface::class, UserResolver::class);
 
+        $this->app->singleton(CouponReservationStoreInterface::class, function ($app) {
+            $class = config('shopping-cart.coupon_reservation_store', DatabaseCouponReservationStore::class);
+
+            if (! class_exists($class)) {
+                throw new \InvalidArgumentException("The coupon reservation store class [{$class}] does not exist.");
+            }
+
+            return new $class;
+        });
+
         $this->app->singleton(CouponManager::class, function ($app) {
             return new CouponManager(
                 $app->make('session'),
                 $app->make('events'),
                 $app->make(UserResolverInterface::class),
-                $app->make(CouponServiceInterface::class)
+                $app->make(CouponServiceInterface::class),
+                $app->make(CouponReservationStoreInterface::class),
             );
         });
 
+        $this->app->singleton(ConditionContextFactory::class, function ($app) {
+            return new ConditionContextFactory($app->make(UserResolverInterface::class));
+        });
+
         $this->app->singleton(ConditionManager::class, function ($app) {
-            return new ConditionManager;
+            $factory = $app->make(ConditionContextFactory::class);
+
+            return new ConditionManager(
+                fn ($objectAccess = true) => $factory->buildFromRuntime($objectAccess)
+            );
         });
     }
 

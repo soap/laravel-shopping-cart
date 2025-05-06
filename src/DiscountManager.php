@@ -37,6 +37,11 @@ class DiscountManager
         return $this->conditionManager;
     }
 
+    public function checkout()
+    {
+        $this->couponManager->applyCoupnsUsage($this->cart);
+    }
+
     /**
      * Calculate the discounts for the cart.
      * Get discount from coupon and condition manager.

@@ -9,6 +9,7 @@ use Illuminate\Session\SessionManager;
 use Soap\ShoppingCart\Adaptors\CouponDTO;
 use Soap\ShoppingCart\Adaptors\CouponFactory;
 use Soap\ShoppingCart\Contracts\CouponInterface;
+use Soap\ShoppingCart\Contracts\CouponReservationStoreInterface;
 use Soap\ShoppingCart\Contracts\CouponServiceInterface;
 use Soap\ShoppingCart\Contracts\InstanceIdentifierInterface;
 use Soap\ShoppingCart\Contracts\UserResolverInterface;
@@ -45,7 +46,8 @@ class CouponManager
         protected SessionManager $session,
         protected Dispatcher $events,
         protected UserResolverInterface $userResolver,
-        protected CouponServiceInterface $couponService)
+        protected CouponServiceInterface $couponService,
+        protected CouponReservationStoreInterface $reservationStore, )
     {
         $this->instance(self::DEFAULT_INSTANCE);
     }
@@ -160,15 +162,28 @@ class CouponManager
 
     public function remove(string $couponCode)
     {
+        $this->user = $this->userResolver->resolve(null, null);
+
         if (! isset($this->coupons[$couponCode])) {
-            throw new \Exception("Coupon not found: {$couponCode}");
+            return;
         }
+        assert($this->user instanceof Model);
+
+        $this->reservationStore->release($couponCode, $this->user);
 
         unset($this->coupons[$couponCode]);
+    }
 
-        $this->session->put($this->instance, $this->coupons);
-
-        return $this;
+    /**
+     * Called when the cart is to be checked out.
+     */
+    public function applyCouponsUsage(?ShoppingCart $cart = null, int|string|null $userId = null, ?string $guard = null): void
+    {
+        foreach ($this->coupons as $code => $data) {
+            if ($data['applied'] ?? false) {
+                $this->applyUsage($code, $cart, $userId, $guard);
+            }
+        }
     }
 
     public function get(string $couponCode): ?array
@@ -223,6 +238,12 @@ class CouponManager
             ->all();
     }
 
+    public function getCouponBreakdownByCode(string $couponCode): ?array
+    {
+        return collect($this->resolvedCoupons(appliedOnly: true))
+            ->firstWhere('code', $couponCode);
+    }
+
     /**
      * Restore coupons from a snapshot (database).
      */
@@ -249,16 +270,23 @@ class CouponManager
             throw new \Exception('No authenticated user found to apply coupon.');
         }
 
-        // Apply the coupon to the cart.
-        $appliedCoupon = $this->couponService->applyCoupon($couponCode, $cart->finalSubtotal(), $this->user);
+        assert($this->user instanceof Model);
+        $this->reservationStore->reserve($couponCode, $this->user);
 
-        if (! $appliedCoupon) {
-            throw new \Exception("Failed to apply coupon: {$couponCode}");
+        $this->markAsApplied($couponCode, 0);
+
+        if ($cart) {
+            $cart->handleCartChanged();
         }
 
         // Mark the coupon as applied.
-        $this->coupons[$appliedCoupon->getCode()]['applied'] = true;
-        $this->session->put($this->instance, $this->coupons);
+        $couponBreakdown = $this->getCouponBreakdownByCode($couponCode);
+        $discountValue = 0;
+        if ($couponBreakdown) {
+            $discountValue = $couponBreakdown['discount'] ?? 0;
+        }
+
+        $this->markAsApplied($couponCode, $discountValue);
 
         return $this;
     }
@@ -326,47 +354,36 @@ class CouponManager
             ->all();
     }
 
-    /**
-     * Remove applied coupons from the list of applied coupons.
-     *
-     * @return $this
-     */
-    public function removeAppliedCoupons(): self
-    {
-        $this->coupons = collect($this->coupons)
-            ->reject(function (array $coupon) {
-                return $coupon['applied'] ?? false;
-            })->toArray();
-
-        return $this;
-    }
-
-    /**
-     * Clear all applied coupons.
-     *
-     * @return $this
-     */
-    public function clearAppliedCoupons(): self
-    {
-        $this->coupons = collect($this->coupons)
-            ->reject(function (array $coupon) {
-                return $coupon['applied'] ?? false;
-            })->toArray();
-
-        return $this;
-    }
-
     public function clear(): self
     {
         $this->coupons = [];
+        $this->session->put($this->instance, $this->coupons);
 
         return $this;
     }
 
-    protected function populateCoupons(): void
+    /**
+     * Apply the coupon usage to the user.
+     * This will mark the coupon as used and remove it from reservation store.
+     * Use this when cart will be checked out.
+     */
+    private function applyUsage(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null, ?string $guard = null): bool
     {
-        foreach ($this->couponService->getCoupons() as $coupon) {
-            $this->addFromAdapter($coupon);
+        $this->user = $this->userResolver->resolve($userId, $guard);
+
+        if (! $this->user) {
+            throw new \Exception('No authenticated user found to apply coupon.');
         }
+        $coupon = $this->get($couponCode)['coupon'];
+        if (! $coupon) {
+            throw new CouponNotFoundException("Coupon not found: {$couponCode}");
+        }
+        // Real appy coupon usage
+        assert($this->user instanceof Model);
+        $this->couponService->applyCoupon($couponCode, $cart->finalSubtotalFloat(), $this->user);
+
+        $this->reservationStore->release($couponCode, $this->user);
+
+        return true;
     }
 }

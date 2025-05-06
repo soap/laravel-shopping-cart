@@ -8,10 +8,15 @@ use MichaelRubel\Couponables\Models\Coupon as ExternalCoupon;
 use MichaelRubel\Couponables\Services\Contracts\CouponServiceContract;
 use Soap\ShoppingCart\Adaptors\CouponAdapter;
 use Soap\ShoppingCart\Contracts\CouponInterface;
+use Soap\ShoppingCart\Contracts\CouponReservationStoreInterface;
 use Soap\ShoppingCart\Contracts\CouponServiceInterface;
 
 class CouponService implements CouponServiceInterface
 {
+    public function __construct(
+        protected CouponReservationStoreInterface $reservationStore
+    ) {}
+
     public function getCoupons(): array
     {
         // This method should return an array of coupons.
@@ -32,9 +37,42 @@ class CouponService implements CouponServiceInterface
         return new CouponAdapter($externalCoupon);
     }
 
+    /**
+     * Check if a coupon is available for a user.
+     *
+     * @internal CouponServiceInterface::isAvailableFor() method is not implemented.
+     * @internal CouponServiceInterface::getRemainingQuantity() method is not implemented.
+     */
+    public function isAvailableFor(string $couponCode, ?Authenticatable $user = null): bool
+    {
+        if (! $user) {
+            throw new \Exception('No authenticated user found to check coupon availability.');
+        }
+        $user = $this->assertModel($user);
+        // $service = app(CouponServiceContract::class);
+        $coupon = \MichaelRubel\Couponables\Models\Coupon::where('code', $couponCode)->first();
+        if (! $coupon) {
+            throw new \Exception('Coupon not found.');
+        }
+        if ($coupon->isOverLimitFor($user)) {
+            return false;
+        }
+
+        $activeReservations = $this->reservationStore->countActiveReservationsExcept($user, $couponCode);
+
+        $remainingQuantity = $coupon->quantity - $activeReservations;
+
+        if ($remainingQuantity <= 0) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function applyCoupon(string $couponCode, $orderAmount = 0, ?Authenticatable $user = null): ?CouponInterface
     {
         $service = app(CouponServiceContract::class);
+        // MichaelRubel\Couponables\Services\Contracts\CouponServiceContract::getCoupon() method
         $coupon = $service->getCoupon($couponCode);
 
         if (! $user) {

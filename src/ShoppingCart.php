@@ -951,6 +951,14 @@ class ShoppingCart
         return true;
     }
 
+    public function checkout(): bool
+    {
+        $this->discountManager->checkout();
+        $this->handleCartChanged();
+
+        return true;
+    }
+
     public function getCouponBreakdown(): array
     {
         return $this->discounts->couponBreakdown ?? [];
@@ -970,7 +978,7 @@ class ShoppingCart
         return new Collection;
     }
 
-    protected function handleCartChanged()
+    public function handleCartChanged()
     {
         $this->discountManager->calculateDiscounts();
         $calculator = new CartCalculator;

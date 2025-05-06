@@ -18,9 +18,12 @@ class TestCase extends Orchestra
             fn (string $modelName) => 'Soap\\ShoppingCart\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
 
+        /*
         $this->loadMigrationsFrom(
-            __DIR__.'/../database/migrations'
+            __DIR__.'/../database/migrations',
+            __DIR__.'/../vendor/michael-rubel/laravel-couponables/database/migrations',
         );
+        */
 
     }
 
