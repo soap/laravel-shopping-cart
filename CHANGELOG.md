@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shopping-cart` will be documented in this file.
 
+## v2.0.12 - 2025-05-06
+
+### What's Changed
+
+* Fix ShoppingCart::removeCoupon() is not exists by @soap in https://github.com/soap/laravel-shopping-cart/pull/13
+
+**Full Changelog**: https://github.com/soap/laravel-shopping-cart/compare/v2.0.11...v2.0.12
+
 ## v2.0.11 - 2025-05-06
 
 **Full Changelog**: https://github.com/soap/laravel-shopping-cart/compare/v2.0.10...v2.0.11
