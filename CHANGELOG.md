@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shopping-cart` will be documented in this file.
 
+## v2.0.9 - 2025-05-06
+
+### What's Changed
+
+* Prepare condition manager by @soap in https://github.com/soap/laravel-shopping-cart/pull/10
+
+**Full Changelog**: https://github.com/soap/laravel-shopping-cart/compare/v2.0.8...v2.0.9
+
 ## v2.0.8 - 2025-05-05
 
 ### What's Changed
