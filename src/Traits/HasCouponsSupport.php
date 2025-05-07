@@ -28,9 +28,9 @@ trait HasCouponsSupport
      * @param  string  $code  The code of the coupon to remove.
      * @return $this
      */
-    public function removeCoupon(string $code): self
+    public function removeCoupon(string $code, int|string|null $userId = null, ?string $guard = null): self
     {
-        $this->coupons()->remove($code);
+        $this->coupons()->remove($code, $this->cart, $userId, $guard);
 
         return $this;
     }
@@ -83,6 +83,11 @@ trait HasCouponsSupport
     public function getAppliedCoupon(): ?array
     {
         return $this->coupons()->appliedCoupons();
+    }
+
+    public function getResolvedCoupons(bool $appliedOnly = true): ?array
+    {
+        return $this->coupons()->resolvedCoupons($appliedOnly);
     }
 
     /**

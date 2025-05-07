@@ -52,6 +52,8 @@ if (! function_exists('createTestCoupon')) {
             'code' => $code,
             'type' => 'percentage',
             'value' => 10,
+            'quantity' => 1,
+            'limit' => 1,
             'data' => [
                 'applies_to' => 'subtotal',
                 'min_order_value' => 0,

@@ -138,6 +138,7 @@ class CouponManager
             throw new \Exception("Coupon not found: {$couponCode}");
         }
 
+        $this->coupons[$couponCode]['applies_target'] = $this->get($couponCode)['coupon']->getAppliesTarget();
         $this->coupons[$couponCode]['applied'] = true;
         $this->coupons[$couponCode]['discount'] = $discount;
 
@@ -160,7 +161,7 @@ class CouponManager
         return $this;
     }
 
-    public function remove(string $couponCode)
+    public function remove(string $couponCode, ?ShoppingCart $cart = null, int|string|null $userId = null, ?string $guard = null)
     {
         $this->user = $this->userResolver->resolve(null, null);
 
@@ -171,7 +172,10 @@ class CouponManager
 
         $this->reservationStore->release($couponCode, $this->user);
 
+        $this->markAsUnapplied($couponCode);
         unset($this->coupons[$couponCode]);
+
+        $this->session->put($this->instance, $this->coupons);
     }
 
     /**
@@ -186,6 +190,10 @@ class CouponManager
         }
     }
 
+    /**
+     * Get the coupon data by code.
+     * This will return the coupon data as an array.
+     */
     public function get(string $couponCode): ?array
     {
         if (! isset($this->coupons[$couponCode])) {
@@ -274,13 +282,13 @@ class CouponManager
         $this->reservationStore->reserve($couponCode, $this->user);
 
         $this->markAsApplied($couponCode, 0);
-
         if ($cart) {
             $cart->handleCartChanged();
         }
 
         // Mark the coupon as applied.
         $couponBreakdown = $this->getCouponBreakdownByCode($couponCode);
+
         $discountValue = 0;
         if ($couponBreakdown) {
             $discountValue = $couponBreakdown['discount'] ?? 0;

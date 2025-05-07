@@ -39,7 +39,7 @@ class DiscountManager
 
     public function checkout()
     {
-        $this->couponManager->applyCoupnsUsage($this->cart);
+        $this->couponManager->applyCouponsUsage($this->cart);
     }
 
     /**
@@ -86,7 +86,6 @@ class DiscountManager
                 }
 
                 $context->appliedCouponCodes['total'][] = $coupon->getCode();
-
                 $context->couponBreakdown[] = [
                     'code' => $coupon->getCode(),
                     'label' => $coupon->label ?? "คูปอง {$coupon->getCode()}",
@@ -96,8 +95,9 @@ class DiscountManager
                     'allocated' => 0.0,
                 ];
             }
+            // ray($context);
         }
-
+        // ray($context);
         $context = app(Pipeline::class)
             ->send($context)
             ->through([
