@@ -62,6 +62,8 @@ class CouponManager
 
         $this->instance = 'coupons.'.$instance;
 
+        $this->hydrateCoupons();
+
         return $this;
     }
 
@@ -355,6 +357,10 @@ class CouponManager
      */
     public function appliedCoupons(): array
     {
+        if (empty($this->coupons)) {
+            $this->coupons = $this->session->get($this->instance, []);
+        }
+
         return collect($this->coupons)
             ->filter(fn ($c) => $c['applied'] === true)
             ->map(fn ($c) => CouponFactory::fromDTO(new CouponDTO(...$c['coupon'])))
@@ -393,5 +399,11 @@ class CouponManager
         $this->reservationStore->release($couponCode, $this->user);
 
         return true;
+    }
+
+    protected function hydrateCoupons(): void
+    {
+        $data = $this->session->get($this->instance, []);
+        $this->coupons = is_array($data) ? $data : [];
     }
 }
