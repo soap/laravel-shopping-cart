@@ -37,7 +37,7 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
-        $this->app->singleton('shopping-cart', function ($app) {
+        $this->app->scoped('shopping-cart', function ($app) {
             return new ShoppingCart($app->make('session'), $app->make('events'));
         });
 
@@ -55,7 +55,7 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
             return new $class;
         });
 
-        $this->app->singleton(CouponManager::class, function ($app) {
+        $this->app->scoped(CouponManager::class, function ($app) {
             return new CouponManager(
                 $app->make('session'),
                 $app->make('events'),
@@ -69,7 +69,7 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
             return new ConditionContextFactory($app->make(UserResolverInterface::class));
         });
 
-        $this->app->singleton(ConditionManager::class, function ($app) {
+        $this->app->scoped(ConditionManager::class, function ($app) {
             $factory = $app->make(ConditionContextFactory::class);
 
             return new ConditionManager(
@@ -83,6 +83,7 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
         $this->app['events']->listen(Logout::class, function () {
             if ($this->app['config']->get('shopping-cart.destroy_on_logout')) {
                 $this->app->make(SessionManager::class)->forget('cart');
+                $this->app->make(SessionManager::class)->forget('coupons');
             }
         });
     }
