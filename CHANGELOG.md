@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-shopping-cart` will be documented in this file.
 
+## v2.0.13 - 2025-05-07
+
+### What's Changed
+
+* test Database Reservation Store when apply then remove and apply then… by @soap in https://github.com/soap/laravel-shopping-cart/pull/14
+
+**Full Changelog**: https://github.com/soap/laravel-shopping-cart/compare/v2.0.12...v2.0.13
+
 ## v2.0.12 - 2025-05-06
 
 ### What's Changed
