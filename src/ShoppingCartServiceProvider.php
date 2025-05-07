@@ -40,6 +40,7 @@ class ShoppingCartServiceProvider extends PackageServiceProvider
         $this->app->scoped('shopping-cart', function ($app) {
             return new ShoppingCart($app->make('session'), $app->make('events'));
         });
+        $this->app->alias('shopping-cart', ShoppingCart::class); // for backward compatibility
 
         $this->app->singleton(CouponServiceInterface::class, CouponService::class);
 

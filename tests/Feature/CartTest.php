@@ -933,6 +933,7 @@ it('will destroy the cart when the user logs out and the config setting was set 
     $this->app['config']->set('shopping-cart.destroy_on_logout', true);
     $this->app->instance(SessionManager::class, Mockery::mock(SessionManager::class, function ($mock) {
         $mock->shouldReceive('forget')->once()->with('cart');
+        $mock->shouldReceive('forget')->once()->with('coupons');
     }));
 
     $user = new DummyUser;

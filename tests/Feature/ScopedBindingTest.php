@@ -1,20 +1,28 @@
 <?php
 
-use Illuminate\Support\Facades\App;
-use Soap\ShoppingCart\Coupon\CouponManager;
-use Soap\ShoppingCart\ShoppingCart;
+use Soap\ShoppingCart\CouponManager;
 
-it('creates a new ShoppingCart instance per request', function () {
-    $cart1 = App::make(ShoppingCart::class);
-    $cart2 = App::make(ShoppingCart::class);
+it('resolves the same ShoppingCart instance within a request', function () {
+    Route::get('/test-cart', function () {
+        $cart1 = app('shopping-cart');
+        $cart2 = app('shopping-cart');
 
-    expect(spl_object_id($cart1))->toEqual(spl_object_id($cart2)) // 🟢 เพราะยังอยู่ใน request เดียว
-        ->and($cart1)->toBeInstanceOf(ShoppingCart::class);
+        return response()->json([
+            'id1' => spl_object_id($cart1),
+            'id2' => spl_object_id($cart2),
+        ]);
+    });
+
+    $response = $this->get('/test-cart')->assertOk();
+
+    $json = $response->json();
+
+    expect($json['id1'])->toEqual($json['id2']); // ✅ ตรงใน request เดียว
 });
 
 it('creates a new CouponManager instance per request', function () {
-    $manager1 = App::make(CouponManager::class);
-    $manager2 = App::make(CouponManager::class);
+    $manager1 = app(CouponManager::class);
+    $manager2 = app(CouponManager::class);
 
     expect(spl_object_id($manager1))->toEqual(spl_object_id($manager2)) // 🟢 shared in one request
         ->and($manager1)->toBeInstanceOf(CouponManager::class);
@@ -22,13 +30,13 @@ it('creates a new CouponManager instance per request', function () {
 
 it('does not share scoped instance across separate requests', function () {
     // Simulate request 1
-    $cartRequest1 = App::make(ShoppingCart::class);
+    $cartRequest1 = app('shopping-cart');
 
     // Simulate ending request
-    App::forgetInstance(ShoppingCart::class);
+    app()->forgetInstance('shopping-cart');
 
     // Simulate request 2
-    $cartRequest2 = App::make(ShoppingCart::class);
+    $cartRequest2 = app('shopping-cart');
 
     expect(spl_object_id($cartRequest1))->not->toEqual(spl_object_id($cartRequest2));
 });

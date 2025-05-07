@@ -30,7 +30,7 @@ class DiscountManager
     /**
      * Shopping generates instance and pass it to the coupon manager.
      */
-    protected function instance($instance = null): static
+    public function instance($instance = null): static
     {
         $this->couponManager->instance($instance);
         // recalculate the cart discount and total affected by coupons stored in the session of coupon manager

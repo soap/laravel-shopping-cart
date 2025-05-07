@@ -136,7 +136,7 @@ class ShoppingCart
         }
 
         $this->instance = 'cart.'.$instance;
-        $this->discountManager->setInstance($instance);
+        $this->discountManager->instance($instance);
 
         return $this;
     }
