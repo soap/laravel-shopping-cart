@@ -930,6 +930,11 @@ class ShoppingCart
         return $this->discountManager->getAppliedCoupons();
     }
 
+    public function getResolvedCoupons(bool $appliedOnly = true): array
+    {
+        return $this->discountManager->getResolvedCoupons($appliedOnly);
+    }
+
     public function appliedCoupons(): array
     {
         return $this->discountManager->getAppliedCoupons();
