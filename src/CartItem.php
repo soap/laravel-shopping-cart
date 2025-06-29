@@ -67,7 +67,6 @@ class CartItem implements Arrayable, Jsonable
      *
      * @var bool
      */
-
     public $isDiscountable = true;
 
     /**
@@ -137,8 +136,7 @@ class CartItem implements Arrayable, Jsonable
      * @param  string  $name
      * @param  float  $price
      * @param  float  $weight
-     * @param  array  $options
-     * @param  bool  $discountable // must be after $options to avoid issues with existing methods
+     * @param  bool  $discountable  // must be after $options to avoid issues with existing methods
      */
     public function __construct($id, $name, $price, $weight = 0, array $options = [], $discountable = true)
     {

@@ -28,8 +28,6 @@ interface BuyableInterface
 
     /**
      * Get the discountable option of the Buyable item.
-     *
-     * @return bool
      */
     public function getIsDiscountable($options = null): bool;
 }

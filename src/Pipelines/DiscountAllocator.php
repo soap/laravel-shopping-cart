@@ -4,7 +4,7 @@ namespace Soap\ShoppingCart\Pipelines;
 
 /**
  * Updated DiscountAllocator to handle isDiscountable property
- * 
+ *
  * Only allocates discounts to items that are discountable.
  * Non-discountable items will receive 0 discount allocation.
  */
@@ -18,10 +18,10 @@ class DiscountAllocator
     public function allocate(array $items, float $netSubtotalDiscount): array
     {
         $result = [];
-        
+
         // Filter only discountable items for allocation base
-        $discountableItems = array_filter($items, fn($item) => $item->isDiscountable);
-        
+        $discountableItems = array_filter($items, fn ($item) => $item->isDiscountable);
+
         // Calculate total base from discountable items only
         $totalBase = collect($discountableItems)->sum(function ($item) {
             return $item->subtotalAfterItemDiscount; // จาก CustomCartItemCalculator

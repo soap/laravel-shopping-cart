@@ -4,16 +4,16 @@ namespace Soap\ShoppingCart\Pipelines;
 
 /**
  * Apply item-level discounts to each cart item
- * 
+ *
  * This step calculates item-level discounts and prepares subtotal for next step.
  * Uses the same logic as CustomCartItemCalculator for consistency.
- * 
+ *
  * Handles:
  * - Individual item discount rates (percentage per unit)
- * - Individual item discount amounts (fixed per unit) 
+ * - Individual item discount amounts (fixed per unit)
  * - Calculates subtotalAfterItemDiscount for each item
  * - Calculates total subtotalAfterItemDiscounts for context
- * 
+ *
  * Note: This step doesn't check isDiscountable because item-level discounts
  * are applied directly to specific items (not distributed from coupons)
  */
@@ -32,14 +32,14 @@ class ApplyItemsDiscounts
 
             // Calculate item-level discount per unit (matches Calculator logic)
             $itemLevelDiscountPerUnit = max(0, $price * $rate + $fixed);
-            
+
             // Calculate subtotal after item-level discount (matches Calculator)
             $subtotalAfterItemDiscount = max(0, ($price - $itemLevelDiscountPerUnit) * $qty);
-            
+
             // Store in item for use by Calculator and next pipeline steps
             $item->itemLevelDiscountPerUnit = $itemLevelDiscountPerUnit;
             $item->subtotalAfterItemDiscount = $subtotalAfterItemDiscount;
-            
+
             // Add to total for context
             $subtotalAfterItemDiscounts += $subtotalAfterItemDiscount;
         }

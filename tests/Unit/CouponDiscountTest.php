@@ -64,7 +64,7 @@ it('can calculate correctly for subtotal discount only', function () {
 
     $breakdownA = $itemA->discountBreakdown; // Get discount breakdown for item A from calculator
     $breakdownB = $itemB->discountBreakdown; // Get discount breakdown for item B from calculator
-    
+
     expect(collect($breakdownA)->where('type', 'subtotal'))->toHaveCount(1);
     expect(collect($breakdownB)->where('type', 'subtotal'))->toHaveCount(1);
 

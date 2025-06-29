@@ -210,7 +210,7 @@ it('can add item with options', function () {
         'id' => 1,
         'name' => 'First item',
     ]), 1, $options);
-    
+
     expect($cartItem)->toBeInstanceOf(\Soap\ShoppingCart\CartItem::class);
     expect($cartItem->options->size)->toEqual('L');
     expect($cartItem->options->color)->toEqual('red');
