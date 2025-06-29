@@ -159,6 +159,8 @@ class ShoppingCart
      * @param  int|float  $qty
      * @param  float  $price
      * @param  float  $weight
+     * @param  array  $options
+     * @param  bool  $discountable
      * @return \Soap\ShoppingCart\CartItem | array
      */
     public function add($id, $name = null, $qty = null, $price = null, $weight = 0, array $options = [], $discountable = true)

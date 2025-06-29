@@ -63,7 +63,7 @@ class CartItem implements Arrayable, Jsonable
     public $price;
 
     /**
-     * The price with TAX of the cart item.
+     * Whether the cart item is discountable.
      *
      * @var bool
      */
