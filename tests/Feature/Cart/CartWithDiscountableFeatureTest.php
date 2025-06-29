@@ -69,8 +69,8 @@ describe('Updated DiscountAllocator with isDiscountable', function () {
         $foodAllocation = $result['food_001'];
 
         // Should be rounded to 2 decimal places
-        expect(round($boatAllocation, 2))->toBe(round($boatAllocation, 2));
-        expect(round($foodAllocation, 2))->toBe(round($foodAllocation, 2));
+        expect(round($boatAllocation, 2))->toBe(51.99); // Expected rounded value for boat allocation
+        expect(round($foodAllocation, 2))->toBe(48.16); // Expected rounded value for food allocation
 
         // Total should equal exactly the discount amount (accounting for rounding adjustment)
         expect(round($boatAllocation + $foodAllocation, 2))->toBe(100.15);
