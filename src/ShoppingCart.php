@@ -159,7 +159,6 @@ class ShoppingCart
      * @param  int|float  $qty
      * @param  float  $price
      * @param  float  $weight
-     * @param  array  $options
      * @param  bool  $discountable
      * @return \Soap\ShoppingCart\CartItem | array
      */
