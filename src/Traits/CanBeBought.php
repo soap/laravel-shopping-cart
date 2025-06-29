@@ -51,4 +51,9 @@ trait CanBeBought
 
         return 0;
     }
+
+    public function getIsDiscountable($options = null): bool
+    {
+        return true; // Default to true, can be overridden in the model
+    }
 }

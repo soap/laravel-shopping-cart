@@ -210,7 +210,7 @@ it('can add item with options', function () {
         'id' => 1,
         'name' => 'First item',
     ]), 1, $options);
-
+    
     expect($cartItem)->toBeInstanceOf(\Soap\ShoppingCart\CartItem::class);
     expect($cartItem->options->size)->toEqual('L');
     expect($cartItem->options->color)->toEqual('red');
@@ -486,6 +486,7 @@ it('will include the tax and subtotal when converted to an array', function () {
             'options' => [],
             'discount' => 0.0,
             'weight' => 0.0,
+            'discountable' => true,
         ],
         '370d08585360f5c568b18d1f2e4ca1df' => [
             'rowId' => '370d08585360f5c568b18d1f2e4ca1df',
@@ -498,6 +499,7 @@ it('will include the tax and subtotal when converted to an array', function () {
             'options' => [],
             'discount' => 0.0,
             'weight' => 0.0,
+            'discountable' => true,
         ],
     ]);
 });
