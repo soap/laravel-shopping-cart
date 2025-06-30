@@ -2,6 +2,21 @@
 
 All notable changes to `laravel-shopping-cart` will be documented in this file.
 
+## v2.1.0 - 2025-06-30
+
+### What's Changed
+
+* Bump dependabot/fetch-metadata from 2.3.0 to 2.4.0 by @dependabot in https://github.com/soap/laravel-shopping-cart/pull/16
+* Bump stefanzweifel/git-auto-commit-action from 5 to 6 by @dependabot in https://github.com/soap/laravel-shopping-cart/pull/17
+* Develop by @soap in https://github.com/soap/laravel-shopping-cart/pull/18
+* Add discountable to CartItem, if false Subtotal discount will not allocated to this item
+
+### New Contributors
+
+* @dependabot made their first contribution in https://github.com/soap/laravel-shopping-cart/pull/16
+
+**Full Changelog**: https://github.com/soap/laravel-shopping-cart/compare/v2.0.14...v2.1.0
+
 ## v2.0.14 - 2025-05-07
 
 ### What's Changed
