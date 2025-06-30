@@ -1,5 +1,5 @@
 {
-  "name": "laravel-shopping-cart-docs",
+  "name": "@laravel-shopping-cart/docs",
   "version": "1.0.0",
   "description": "Documentation for Laravel Shopping Cart package",
   "type": "module",
@@ -8,9 +8,8 @@
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview",
-    "docs:serve": "vitepress serve",
     "build": "vitepress build",
-    "serve": "vitepress preview"
+    "clean": "rm -rf .vitepress/dist .vitepress/cache node_modules/.vite"
   },
   "keywords": [
     "laravel",
@@ -19,7 +18,7 @@
     "documentation",
     "vitepress"
   ],
-  "author": "SOAP Team",
+  "author": "Prasit Gebsaap",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -31,14 +30,14 @@
   },
   "homepage": "https://soap.github.io/laravel-shopping-cart/",
   "devDependencies": {
-    "vitepress": "^1.0.0",
-    "@types/node": "^20.10.0",
-    "vitepress-plugin-search": "^1.0.4",
-    "medium-zoom": "^1.0.8",
+    "vitepress": "^1.6.0",
+    "@types/node": "^24.0.0",
+    "vitepress-plugin-search": "^1.0.4-alpha.22",
+    "medium-zoom": "^1.1.0",
     "@iconify/vue": "^4.1.0"
   },
   "dependencies": {
-    "vue": "^3.3.0"
+    "vue": "^3.5.0"
   },
   "engines": {
     "node": ">=18.0.0",
