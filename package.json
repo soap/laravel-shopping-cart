@@ -1,0 +1,11 @@
+{
+    "name": "laravel-shopping-cart",
+    "private": true,
+    "scripts": {
+      "docs:dev": "cd docs && npm run docs:dev",
+      "docs:build": "cd docs && npm run docs:build", 
+      "docs:preview": "cd docs && npm run docs:preview",
+      "docs:install": "cd docs && npm install"
+    },
+    "workspaces": ["docs"]
+  }
