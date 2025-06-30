@@ -81,12 +81,12 @@ export default {
   
       socialLinks: [
         { icon: 'github', link: 'https://github.com/soap/laravel-shopping-cart' },
-        { icon: 'discord', link: 'https://discord.gg/laravel' }
+        { icon: 'discord', link: 'https://discord.gg/4Gf9eBzu' }
       ],
   
       footer: {
-        message: 'Released under the MIT License.',
-        copyright: 'Copyright © 2024 SOAP Team'
+        message: 'Built with ❤️ for Laravel developers',
+        copyright: 'Copyright © 2024-2025 by Prasit Gebsaap'
       },
   
       editLink: {
