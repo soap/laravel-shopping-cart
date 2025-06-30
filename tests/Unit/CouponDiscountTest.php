@@ -16,11 +16,13 @@ it('can calculate correctly for subtotal discount only', function () {
             'id' => 1,
             'name' => 'Item A',
             'price' => 100,
+            'discountable' => true,
         ]),
         CartItem::fromArray([
             'id' => 2,
             'name' => 'Item B',
             'price' => 200,
+            'discountable' => true,
         ]),
     ];
     $items[0]->setQuantity(2)->setTaxRate(0); // Item A quantity and tax rate
@@ -30,7 +32,11 @@ it('can calculate correctly for subtotal discount only', function () {
     $context = new CalculationContext($items);
     $context->percentSubtotalDiscount = 5; // 5% coupon
     $context->fixedSubtotalDiscount = 30;  // 30 fixed coupon
-    $context->appliedCouponCodes = ['SAVE5'];
+    $context->appliedCouponCodes = [
+        'item' => [],
+        'subtotal' => ['SAVE5'],
+        'total' => [],
+    ];
 
     $result = app(Pipeline::class)
         ->send($context)

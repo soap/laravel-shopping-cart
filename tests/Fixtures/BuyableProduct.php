@@ -59,4 +59,9 @@ class BuyableProduct extends Model implements BuyableInterface
     {
         return $this->weight;
     }
+
+    public function getIsDiscountable($options = null): bool
+    {
+        return true; // Default to true, can be overridden in the model
+    }
 }

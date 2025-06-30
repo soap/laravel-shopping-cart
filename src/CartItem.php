@@ -63,6 +63,13 @@ class CartItem implements Arrayable, Jsonable
     public $price;
 
     /**
+     * Whether the cart item is discountable.
+     *
+     * @var bool
+     */
+    public $isDiscountable = true;
+
+    /**
      * The weight of the product.
      *
      * @var float
@@ -129,8 +136,9 @@ class CartItem implements Arrayable, Jsonable
      * @param  string  $name
      * @param  float  $price
      * @param  float  $weight
+     * @param  bool  $discountable  // must be after $options to avoid issues with existing methods
      */
-    public function __construct($id, $name, $price, $weight = 0, array $options = [])
+    public function __construct($id, $name, $price, $weight = 0, array $options = [], $discountable = true)
     {
         if (empty($id)) {
             throw new \InvalidArgumentException('Please supply a valid identifier.');
@@ -149,6 +157,7 @@ class CartItem implements Arrayable, Jsonable
         $this->name = $name;
         $this->price = floatval($price);
         $this->weight = floatval($weight);
+        $this->isDiscountable = $discountable;
         $this->options = new CartItemOptions($options);
         $this->rowId = $this->generateRowId($id, $options);
     }
@@ -325,6 +334,7 @@ class CartItem implements Arrayable, Jsonable
         $this->id = $item->getBuyableIdentifier($this->options);
         $this->name = $item->getBuyableDescription($this->options);
         $this->price = $item->getBuyablePrice($this->options);
+        $this->isDiscountable = $item->getIsDiscountable($this->options);
     }
 
     /**
@@ -341,7 +351,7 @@ class CartItem implements Arrayable, Jsonable
         $this->price = Arr::get($attributes, 'price', $this->price);
         $this->weight = Arr::get($attributes, 'weight', $this->weight);
         $this->options = new CartItemOptions(Arr::get($attributes, 'options', $this->options));
-
+        $this->isDiscountable = Arr::get($attributes, 'isDiscountable', $this->isDiscountable);
         $this->rowId = $this->generateRowId($this->id, $this->options->all());
     }
 
@@ -420,6 +430,13 @@ class CartItem implements Arrayable, Jsonable
         return $this;
     }
 
+    public function setDiscountable($discountable)
+    {
+        $this->isDiscountable = $discountable;
+
+        return $this;
+    }
+
     /**
      * Get an attribute from the cart item or get the associated model.
      *
@@ -481,7 +498,8 @@ class CartItem implements Arrayable, Jsonable
             $attributes['name'],
             $attributes['price'],
             $attributes['weight'] ?? 0,
-            $options
+            $options,
+            $attributes['discountable'] ?? true,
         );
 
         // ✅ เติม field เสริมทั้งหมด
@@ -507,9 +525,9 @@ class CartItem implements Arrayable, Jsonable
      * @param  float  $price
      * @return \Soap\ShoppingCart\CartItem
      */
-    public static function fromAttributes($id, $name, $price, $weight, array $options = [])
+    public static function fromAttributes($id, $name, $price, $weight, array $options = [], $discountable = true)
     {
-        return new self($id, $name, $price, $weight, $options);
+        return new self($id, $name, $price, $weight, $options, $discountable);
     }
 
     /**
@@ -543,6 +561,7 @@ class CartItem implements Arrayable, Jsonable
                 ? $this->options->toArray()
                 : $this->options,
             'discount' => $this->discount,
+            'discountable' => $this->isDiscountable,
             'tax' => $this->tax,
             'subtotal' => $this->subtotal,
         ];

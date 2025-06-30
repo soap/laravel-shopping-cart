@@ -486,6 +486,7 @@ it('will include the tax and subtotal when converted to an array', function () {
             'options' => [],
             'discount' => 0.0,
             'weight' => 0.0,
+            'discountable' => true,
         ],
         '370d08585360f5c568b18d1f2e4ca1df' => [
             'rowId' => '370d08585360f5c568b18d1f2e4ca1df',
@@ -498,6 +499,7 @@ it('will include the tax and subtotal when converted to an array', function () {
             'options' => [],
             'discount' => 0.0,
             'weight' => 0.0,
+            'discountable' => true,
         ],
     ]);
 });

@@ -32,6 +32,11 @@ class CouponAdapter implements ExternalCoupon
         return $this->coupon->value; // This is the discount value
     }
 
+    /**
+     * Get the target for the coupon.
+     * This is custom data for Couponables package's coupon model
+     * it can be 'item', 'subtotal', 'shipping' or 'total'
+     */
     public function getAppliesTarget(): ?string
     {
         if ($this->coupon->data->has('applies_to')) {
